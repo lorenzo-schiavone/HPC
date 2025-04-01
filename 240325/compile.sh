@@ -8,4 +8,4 @@ fi
 FILE=$1
 OUTPUT=${FILE%.*}  # Removes the .cpp extension
 
-g++ -Xpreprocessor -fopenmp "$FILE" -L$(brew --prefix libomp)/lib -lomp -I$(brew --prefix libomp)/include -o "$OUTPUT"
+g++ -Xpreprocessor -fopenmp "$FILE" -L/usr/local/opt/libomp/lib -lomp -I/usr/local/opt/libomp/include -o "$OUTPUT"
