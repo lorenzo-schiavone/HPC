@@ -1,0 +1,3 @@
+g++ -Xpreprocessor -fopenmp $File.cpp -I$(brew --prefix libomp)/include -L$(brew --prefix libomp)/lib -lomp -o $File.x
+
+now with gomp i can compile it faster
