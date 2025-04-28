@@ -20,3 +20,11 @@ fare nuovo programma principale in cui passiamo nome matrici per leggerle con ro
 poi fare prodotto matrice vettore. controllare con un vettore di tutti uni e confrontarli con somma di righe che dovrebbe essere uguale.
 
 verificato con mat63, provate cubo 591 e cubo 35199 per vedere se abbiamo speedup usando più processi
+
+to compile 
+g++ -fopenmp readMat.cpp main.cpp -o main.xx
+
+to run 
+./main.xx matrice np
+
+matrici su moodle
