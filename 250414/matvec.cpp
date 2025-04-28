@@ -33,13 +33,12 @@ int main(int argc, const char* argv[]) {
         }
 
         printf("nr nt %d %d", nr, nt);
-        //Leggo il vettore
+        //Leggo la matrice
         A.nr = nr;
         A.nt = nt;
         A.iat = (int*) malloc((nr+1)*sizeof(int));
         A.ja = (int*) malloc(nt*sizeof(int));
         A.coef = (double*) malloc(nt*sizeof(double));
-        printf("here\n");
                  
         for (int i = 0; i < nr+1; i++) {
             fscanf(fid, "%d",&(A.iat[i]));
@@ -68,7 +67,6 @@ int main(int argc, const char* argv[]) {
         fclose(fid);
     }
     
-
     printf("Matrice in formato coordinate:\n");
     printf("%d nr" , nr);
     for (int i = 0; i < nr; i++){
@@ -92,14 +90,13 @@ int main(int argc, const char* argv[]) {
 
     // se tanti processi ogni tanto controllare che vettori siano sincronizzato
     #pragma omp parallel for num_threads(np)
-    {
     for (int i = 0; i < nr; i++){
         x[i] = 0.0;
         for (int j = iat[i]; j < iat[i+1]; j++){
             x[i] += coef[j] * v[ja[j]];
         }
     }
-    }
+
 
     printf("MxV:\n");
     for (int i = 0; i < nr; i++){

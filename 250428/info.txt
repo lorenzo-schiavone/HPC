@@ -1,0 +1,22 @@
+in readmat file cpp per leggere matrice sparsa in formato coordinato. (i,j, a_{ij})
+
+un po' più complicato è convertirlo in formato csr.
+
+irow2iat converte l'indice
+
+bool se in formato binario: true (meno spazio e lettura/scrittura più veloce) o in formato ASCII
+
+fopen (rb) : r = read, b = binario
+
+struttura header per memorizzare: - nr (numero righe) - nc (n colonne) - nt (n non nulli)
+
+si toglie 1 perché le matrici sono scritti con indici che partono da uno ma in c partono da zero
+
+irow conta il numero di elementi con lo stesso indice di riga. quando cambia incrementa il valore di iat
+
+
+fare nuovo programma principale in cui passiamo nome matrici per leggerle con routine data
+
+poi fare prodotto matrice vettore. controllare con un vettore di tutti uni e confrontarli con somma di righe che dovrebbe essere uguale.
+
+verificato con mat63, provate cubo 591 e cubo 35199 per vedere se abbiamo speedup usando più processi

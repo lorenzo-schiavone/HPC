@@ -1,0 +1,7 @@
+*.rig
+*.csr
+*.o
+*.exe
+*.out
+.DS_Store
+250428/MATS/*
