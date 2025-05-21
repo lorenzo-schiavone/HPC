@@ -11,7 +11,7 @@ double det3(double* r0,double* r1,double* r2 ){
         - r1[0]*(r0[1]*r2[2]-r2[1]*r0[2])
         + r2[0]*(r0[1]*r1[2]-r1[1]*r0[2]);
 }
-int sign(double x){
+double sign(double x){
    return (x>0) - (x<0);
 }
 
@@ -153,6 +153,32 @@ int main(int argc, const char* argv[]){
          d[ii] = (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[0]*nk[2]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
       }
 
+      // a,b,c,d have something inside
+      // printf("a: \n");
+      // for (int ii=0;ii<4;ii++){
+      //    printf("%f ", a[ii]);
+      // }
+      // printf("\n");
+
+      // printf("b: \n");
+      // for (int ii=0;ii<4;ii++){
+      //    printf("%f ", b[ii]);
+      // }
+      // printf("\n");
+
+      // printf("c: \n");
+      // for (int ii=0;ii<4;ii++){
+      //    printf("%f ", c[ii]);
+      // }
+      // printf("\n");
+
+      // printf("d: \n");
+      // for (int ii=0;ii<4;ii++){
+      //    printf("%f ", d[ii]);
+      // }
+      // printf("\n");
+
+      // return 0;
       double *Hloc_buf = (double*) malloc(4*4*sizeof(double));
       double **Hloc = (double**) malloc(4*sizeof(double*));
       double *Ploc_buf = (double*) malloc(4*4*sizeof(double));
@@ -169,8 +195,8 @@ int main(int argc, const char* argv[]){
 
       for (int i=0;i<4; i++){
          double* Hi = Hloc[i];
-         double* Pi = Hloc[i];
-         double* Bi = Hloc[i];
+         double* Pi = Ploc[i];
+         double* Bi = Bloc[i];
          for (int j=0;j<4;j++){
             Hi[j] = (D[0]*b[i]*b[j] + D[1]*c[i]*c[j] + D[2]*d[i]*d[j])/ (36 * abs(vol));
             Pi[j] = abs(vol)/20;
@@ -179,6 +205,33 @@ int main(int argc, const char* argv[]){
          Pi[i]*=2;
       }
       
+      // check if local matrix have been filled:
+      // printf("Hloc: \n");
+      // for (int i=0;i<4; i++){
+      //    for (int j=0;j<4;j++){
+      //       printf("%f ", Hloc[i][j]);
+      //    }
+      //    printf("\n");
+      // }
+      // printf("\n");
+      // printf("Ploc: \n");
+      // for (int i=0;i<4; i++){
+      //    for (int j=0;j<4;j++){
+      //       printf("%f ", Ploc[i][j]);
+      //    }
+      //    printf("\n");
+      // }
+      // printf("\n");
+      // printf("Bloc: \n");
+      // for (int i=0;i<4; i++){
+      //    for (int j=0;j<4;j++){
+      //       printf("%f ", Bloc[i][j]);
+      //    }
+      //    printf("\n");
+      // }
+      // printf("\n");
+      // return 0;
+
       // put them inside coefH, coefP, coefB
       // omp atomic or whatever here like assembly only row for nodes deputed to the process
       // maybe later instead of first building the local matrix and then put it inside coef, put it directly there
@@ -199,14 +252,27 @@ int main(int argc, const char* argv[]){
                }
             }
          }
-      }
-      
+      }  
    }
 
-   
+   // some print of coef: all empty :(
+   printf("coefH: \n");
+   for (int i=0; i<40; i++){
+      printf("%f ", coefH[i]);
+   }
+   printf("\n");
+   printf("coefB: \n");
+   for (int i=0; i<40; i++){
+      printf("%f ", coefB[i]);
+   }
+   printf("\n");
 
-   // before we may need to compute signed volume -> determinant 3x3
-   // even before the coor matrix
+   printf("coefP: \n");
+   for (int i=0; i<40; i++){
+      printf("%f ", coefP[i]);
+   }
+   printf("\n");
+
 
    // Free memory
    free(coord);
@@ -215,5 +281,8 @@ int main(int argc, const char* argv[]){
    free(tetra_buf);
    free(iat);
    free(ja);
+   free(coefH);
+   free(coefP);
+   free(coefB);
 
 }
