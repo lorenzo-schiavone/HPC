@@ -1,0 +1,40 @@
+parallel assembly
+
+- array con coord nodi nn
+- array con connettività elementi 
+- array con proproetà materiali
+    permeabilità mezzo poroso, conducibilità elettrica etc
+
+conosciamo già topologia (pattern di non zeri della matrice): (ci da un programmino che lo fa: sequenziale ma fatta solo una volta)
+
+for each element
+    1. calcolo di matrice rigidezza locale : dimensione data dal numero di incognite per node nu -> ( nu*nnod )^2
+    2. assemblaggio nella matrice globale: trovare relazione ingognite locali -> incognite globali
+        e accumulo lì
+
+come parallelizzare: quasi banale
+parallelizzare loop sugli elementi 
+può succedere che matrici locali sono grande: meccanica strutturale con 8-20 nodi ogni nodo ha 3 incognite (60x60)
+per problemi non lineare bisogna risolvere piccoli newton loops per ogni elemento
+
+costosa: ricerca posizione di dove accumulare elementi nella matrice globale A. (anche questa può essere parallelizzata)
+
+nessuna dipendenza di dati: 
+
+problema è accumulazione su matrice globale possibili data race più processi vanno a scrivere contemporaneamente nella stessa area di memoria. come fare: critical -> proteggere regioni dove ci possono essere data race. Al più un processo contemporaneamente su quella regione.
+
+se calcolo matrice locale e ricerca non trascurabile, l'overhead del critical è negligibile. se invece calcolo matrice locale e posizione economica. tutti i processi si fermano al critical e aspettano ad entrare
+
+scarsa parallelizzazione. Bisogna cambiare costrutto. invece che critical usa "atomic" (protegge una riga di codice). cpu controlla che memoria sia acceduta una per volta ->>>> usare atomic. Overhead molto minore, più efficente ma comunque introduce overhead.
+
+E' necessario usare atomica per ogni accumulo?? no se dividiamo in modo intelligente gli elementi basta usare atomic sugli elimenti di boundary tra regioni
+
+come fare? separare elementi interni e di interfaccia. prestare attenzione agli elementi di interfaccia -> usare atomic
+rule of thumbs assegno elementi al processo più basso. oppure ad entrambi i processi ponendo attenzione che ogni processo assemba solo componenti che lo riguardano (in questo modo non serve neanche usare l'atomica!). cos'è meglio? è spaccare capello in 4. bordo è molto più piccolo del dominio intero. lui preferisce il secondo approccio ma questione di gusto.
+
+fare loop completo su tutti gli elementi per ogni thread
+vedo connettività. in base a quello decido cosa fare. se tutti interni, se esterni, se interfaccia.
+
+necessario dividere le incognite del dominio per minimizzare le interfacce. esempio quadrato diviso a colonne ha tutti gli elementi come interfaccia. ci sono algoritmi specializzati a questo (reverse cutting mp). Algoritmo più semplice: riduzione di banda nella matrice in modo tale che sia molto stretta (tutti i termini vicino alla diagonale). spezzarla in righe così da avere poche comunicazioni
+
+ridurre banda -> suddividere righe -> assemblare in modo intelligente.

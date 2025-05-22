@@ -3,6 +3,9 @@
 #include <fstream>
 #include <cstdlib>
 using namespace std;
+#include <omp.h>
+#include <chrono>
+
 
 #include "topol.h"
 
@@ -19,10 +22,11 @@ double sign(double x){
 int main(int argc, const char* argv[]){
 
    // Check arguments
-   if (argc < 2) {
+   if (argc < 4) {
       printf("Too few arguments.\n Usage: [tetra file] [coord file]\n");
       exit(1);
    }
+   int np = atoi(argv[3]);
    // Read tetrahedrons
    ifstream tetra_file(argv[1]);
    // Read header
@@ -69,7 +73,7 @@ int main(int argc, const char* argv[]){
    int nterm;
    int *iat = nullptr;
    int *ja = nullptr;
-   topol(nn,ntet,30,tetra,nterm,iat,ja); // is 30 enough? connectivity per node is ok, it would be very irregular
+   topol(nn,ntet,50,tetra,nterm,iat,ja); // is 30 enough? connectivity per node is ok, it would be very irregular
    printf("Topology created!\n");
    // here we have iat and ja ready to be used
    // -------------------------------------------------------------------------------------------------------------------------------
@@ -98,7 +102,7 @@ int main(int argc, const char* argv[]){
       for (int j = 0; j < 3; j++) coord[i][j]--;
 
    // -------------------------------------------------------------------------------------------------------------------------------
-
+   auto startTime = std::chrono::high_resolution_clock::now();
    // diffusion and flow velocity
    double* D = (double*) malloc(3*sizeof(double));
    D[0]=1.;D[1]=1.;D[2]=1.;
@@ -107,6 +111,7 @@ int main(int argc, const char* argv[]){
 
    double* volumes = (double*) malloc(ntet*sizeof(double));
    
+   # pragma omp parallel for num_threads(np)
    for (int i=0;i<ntet; i++){
       // volumes[i] = 1/6 * det[ 1....] det3x3
       int* tet = tetra[i];
@@ -120,10 +125,10 @@ int main(int argc, const char* argv[]){
                    det3(n0,n1,n3)-
                    det3(n0,n1,n2))/6;
    }
-   printf("Volumes: \n");
-   for (int i=0;i<10; i++){
-      printf("%f\n", volumes[i]);
-   }
+   // printf("Volumes: \n");
+   // for (int i=0;i<10; i++){
+   //    printf("%f\n", volumes[i]);
+   // }
    // we have to build H, B, P csr matrix.
    // so just coefH, coefB, coefP
    double* coefH = (double*) malloc (nterm * sizeof(double));
@@ -135,13 +140,14 @@ int main(int argc, const char* argv[]){
       coefP[i]=0;
    }
 
+   # pragma omp parallel for num_threads(np)
    for (int jj=0;jj<ntet;jj++){
       int* tet = tetra[jj];
       double vol = volumes[jj];
-      double a[4];
-      double b[4];
-      double c[4];
-      double d[4];
+      double* a = (double*) malloc(4*sizeof(double));
+      double* b = (double*) malloc(4*sizeof(double));
+      double* c = (double*) malloc(4*sizeof(double));
+      double* d = (double*) malloc(4*sizeof(double));
 
       for (int ii=0;ii<4;ii++){
          double* nj=coord[tet[(ii+1)%4]];
@@ -153,44 +159,19 @@ int main(int argc, const char* argv[]){
          d[ii] = (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[0]*nk[2]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
       }
 
-      // a,b,c,d have something inside
-      // printf("a: \n");
-      // for (int ii=0;ii<4;ii++){
-      //    printf("%f ", a[ii]);
-      // }
-      // printf("\n");
-
-      // printf("b: \n");
-      // for (int ii=0;ii<4;ii++){
-      //    printf("%f ", b[ii]);
-      // }
-      // printf("\n");
-
-      // printf("c: \n");
-      // for (int ii=0;ii<4;ii++){
-      //    printf("%f ", c[ii]);
-      // }
-      // printf("\n");
-
-      // printf("d: \n");
-      // for (int ii=0;ii<4;ii++){
-      //    printf("%f ", d[ii]);
-      // }
-      // printf("\n");
-
-      // return 0;
+      
       double *Hloc_buf = (double*) malloc(4*4*sizeof(double));
       double **Hloc = (double**) malloc(4*sizeof(double*));
       double *Ploc_buf = (double*) malloc(4*4*sizeof(double));
       double **Ploc = (double**) malloc(4*sizeof(double*));
       double *Bloc_buf = (double*) malloc(4*4*sizeof(double));
       double **Bloc = (double**) malloc(4*sizeof(double*));
-      k=0;
+      int kk=0;
       for (int i=0;i<4;i++){
-         Hloc[i] = &(Hloc_buf[k]);
-         Ploc[i] = &(Ploc_buf[k]);
-         Bloc[i] = &(Bloc_buf[k]);
-         k+=4;
+         Hloc[i] = &(Hloc_buf[kk]);
+         Ploc[i] = &(Ploc_buf[kk]);
+         Bloc[i] = &(Bloc_buf[kk]);
+         kk+=4;
       }
 
       for (int i=0;i<4; i++){
@@ -205,33 +186,6 @@ int main(int argc, const char* argv[]){
          Pi[i]*=2;
       }
       
-      // check if local matrix have been filled:
-      // printf("Hloc: \n");
-      // for (int i=0;i<4; i++){
-      //    for (int j=0;j<4;j++){
-      //       printf("%f ", Hloc[i][j]);
-      //    }
-      //    printf("\n");
-      // }
-      // printf("\n");
-      // printf("Ploc: \n");
-      // for (int i=0;i<4; i++){
-      //    for (int j=0;j<4;j++){
-      //       printf("%f ", Ploc[i][j]);
-      //    }
-      //    printf("\n");
-      // }
-      // printf("\n");
-      // printf("Bloc: \n");
-      // for (int i=0;i<4; i++){
-      //    for (int j=0;j<4;j++){
-      //       printf("%f ", Bloc[i][j]);
-      //    }
-      //    printf("\n");
-      // }
-      // printf("\n");
-      // return 0;
-
       // put them inside coefH, coefP, coefB
       // omp atomic or whatever here like assembly only row for nodes deputed to the process
       // maybe later instead of first building the local matrix and then put it inside coef, put it directly there
@@ -243,35 +197,43 @@ int main(int argc, const char* argv[]){
          double* Bi = Bloc[i];
          for (int j=0;j<4;j++){
             // in ja from iat[tet[i]] look for tet[j]
-            for (int ii=iat[tet[i]]; ii<iat[tet[i]+1]; ii++){
+            int curr_node = tet[i];
+            for (int ii=iat[curr_node]; ii<iat[curr_node+1]; ii++){
                int jjj = tet[j];
-               if (ja[ii]== jjj){
+               if (ja[ii] == jjj){
+                  #pragma omp atomic
                   coefH[ii] += Hi[j];
+                  #pragma omp atomic
                   coefP[ii] += Pi[j];
+                  #pragma omp atomic
                   coefB[ii] += Bi[j];
                }
             }
          }
       }  
    }
+   auto endTime = std::chrono::high_resolution_clock::now();
+   auto timeTaken = std::chrono::duration<double>(endTime - startTime);
 
-   // some print of coef: all empty :(
-   printf("coefH: \n");
-   for (int i=0; i<40; i++){
-      printf("%f ", coefH[i]);
-   }
-   printf("\n");
-   printf("coefB: \n");
-   for (int i=0; i<40; i++){
-      printf("%f ", coefB[i]);
-   }
-   printf("\n");
+   printf("time taken %f\n", timeTaken.count());
 
-   printf("coefP: \n");
-   for (int i=0; i<40; i++){
-      printf("%f ", coefP[i]);
-   }
-   printf("\n");
+   // // some print of coef: all empty :(
+   // printf("coefH: \n");
+   // for (int i=0; i<10; i++){
+   //    printf("%f ", coefH[i]);
+   // }
+   // printf("\n");
+   // printf("coefB: \n");
+   // for (int i=0; i<10; i++){
+   //    printf("%f ", coefB[i]);
+   // }
+   // printf("\n");
+
+   // printf("coefP: \n");
+   // for (int i=0; i<10; i++){
+   //    printf("%f ", coefP[i]);
+   // }
+   // printf("\n");
 
 
    // Free memory

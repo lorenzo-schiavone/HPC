@@ -1,0 +1,64 @@
+problema convection diffusion
+v'' v*v+
+
+problema transiente
+condizioni iniziali - Neumann al bordo: flusso sul bordo dx
+
+risolvere agli elementi finiti
+
+matrici di rigidezza come sempre
+
+matrice di convettiva
+
+matrice di massa
+
+per problema 2d un po' piu complicato 
+
+c(x,y,0) = c_ condizione iniziale IC
+
+flusso noto BC
+
+ai, bi, ci, di sono alla fine della pagine 5 (per dim=3) 
+
+RISOLVERE PROBLEMA 2D 
+assemblare matrici di rigidezza, convezione, capacità
+fare eulero implicito per discretizzazione temporale
+
+sistema non simmetrico perchè c'è la matrice di convezione
+
+------------------------
+
+- scrivere funzioni per calcolo matrici locali (formulette sul foglio)
+- assemblaggio in parallelo ( avremo mesh con numerizione originale e renumerate con la banda ristretta - fare il confronto (vedere vantaggio del secondo in parallelo))
+- risolvere sistema con gmres (precondizionatore jacobi)
+- andare a risolvere con euler implicto (risolvere sistema lineare)
+    (H + B)c + P dc/dt = q
+
+    dc/dt = [c(t + dt) - c(dt) ]/ dt
+
+    (H + B)c(t+dt) + P[c(t + dt) - c(t) ]/ dt = q
+    (H+B+P/dt) c(t+dt) = q + P*c(t)/dt risolvere questo sistema
+
+basta risolvere per uno step
+si può pensare c(0)= 0. risolvere questo sistema
+
+(H+B+P/dt) c(t+dt) = q
+
+
+flusso entrante e condizioni iniziali possiamo sceglierli noi
+
+poi scrivere report
+
+piccolo studio su come scale con i processori ( non aspettiamoci tanto speed up)
+
+quelli su moodle sono già a banda stretta
+
+quando pronti mandare email a lui con report e dopo due tre giorni (dopo una settimana più o meno)
+
+descrizioni di quello fatto
+
+prove di assemblaggio e sistema con un po' si processi diversi
+
+interno se tutti dentro gli indici dentro il range di indici deputati a un processore
+
+conclusione

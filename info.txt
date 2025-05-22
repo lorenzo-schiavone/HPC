@@ -1,2 +1,4 @@
 to compile
 g++ main.cpp -o main
+
+g++ -Xpreprocessor -fopenmp -I\$(brew --prefix libomp)/include -L\$(brew --prefix libomp)/lib -lomp
