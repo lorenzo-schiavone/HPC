@@ -7,7 +7,9 @@ using namespace std;
 #include <chrono>
 
 
+
 #include "topol.h"
+#include "gmres.h"
 
 double det3(double* r0,double* r1,double* r2 ){
    return r0[0]*(r1[1]*r2[2]-r2[1]*r1[2]) 
@@ -23,7 +25,7 @@ int main(int argc, const char* argv[]){
 
    // Check arguments
    if (argc < 4) {
-      printf("Too few arguments.\n Usage: [tetra file] [coord file]\n");
+      printf("Too few arguments.\n Usage: [tetra file] [coord file] [np]\n");
       exit(1);
    }
    int np = atoi(argv[3]);
@@ -102,12 +104,12 @@ int main(int argc, const char* argv[]){
       for (int j = 0; j < 3; j++) coord[i][j]--;
 
    // -------------------------------------------------------------------------------------------------------------------------------
-   auto startTime = std::chrono::high_resolution_clock::now();
+   std::chrono::time_point<std::chrono::high_resolution_clock> startTime = std::chrono::high_resolution_clock::now();
    // diffusion and flow velocity
    double* D = (double*) malloc(3*sizeof(double));
-   D[0]=1.;D[1]=1.;D[2]=1.;
+   D[0]=.1;D[1]=.1;D[2]=1.;
    double* v = (double*) malloc(3*sizeof(double));
-   v[0]=1.;v[1]=1.;v[2]=1.;
+   v[0]=5.;v[1]=5.;v[2]=5.;
 
    double* volumes = (double*) malloc(ntet*sizeof(double));
    
@@ -212,11 +214,39 @@ int main(int argc, const char* argv[]){
          }
       }  
    }
-   auto endTime = std::chrono::high_resolution_clock::now();
-   auto timeTaken = std::chrono::duration<double>(endTime - startTime);
+   std::chrono::time_point<std::chrono::high_resolution_clock> endTime = std::chrono::high_resolution_clock::now();
+   std::chrono::duration<double> timeTaken = std::chrono::duration<double>(endTime - startTime);
 
-   printf("time taken %f\n", timeTaken.count());
+   printf("assembly time taken %f\n", timeTaken.count());
 
+   //// HERE WE TRY TO MAKE A GMRES
+   double* coefA = (double*) malloc (nterm * sizeof(double));
+   double dt = 0.1;
+   for (int i=0;i<nterm; i++){
+      coefA[i] = coefB[i]+coefH[i] + coefP[i]/dt;
+   }
+   printf("coefA build\n");
+   double* x_true = (double*) malloc(nnodes*sizeof(double));
+   for(int i=0;i<nnodes;i++){
+      x_true[i] = 1.0;
+   }
+
+   double* q = (double*) malloc(nnodes*sizeof(double));
+   matcsrvecprod(nnodes, iat, ja, coefA, x_true, q, np);
+   printf("rhs build\n");
+
+   double* x = (double *) malloc(nnodes*sizeof(double));
+   for (int i=0;i<nnodes;i++){
+      x[i] = 0;
+   }
+   printf("gmres start\n");
+   gmres(nnodes, iat, ja, coefA, q, 1e-10, 100, np, x);
+   printf("gmres end\n");
+   printf("x: \n");
+   for (int i=0; i<nnodes; i++){
+      printf("%f ", x[i]);
+   }
+   printf("\n");
    // // some print of coef: all empty :(
    // printf("coefH: \n");
    // for (int i=0; i<10; i++){
