@@ -45,7 +45,7 @@ void matcsrvecprod(int nrows,int* iat,int* ja,double* coef,double* v, double* x,
 
 // substitute v with v + alpha * w 
 void daxyps(int nrows, double* v, double* w, double alpha, int np){
-    // #pragma omp parallel for num_threads(np)
+    #pragma omp parallel for num_threads(np)
     for (int i = 0; i < nrows; i++){
         v[i]+= alpha * w[i];
     }
@@ -54,7 +54,7 @@ void daxyps(int nrows, double* v, double* w, double alpha, int np){
 void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, int maxit, int np, double* x){
     
     // initial estimate is 0
-    x = (double*) malloc (nrows*sizeof(double));
+    // x = (double*) malloc (nrows*sizeof(double));
     for (int i=0; i<nrows; i++){
         x[i]=0.;
     }
@@ -137,6 +137,7 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
         printMatrix(Q, it,it, "Q");
         printMatrix(R, it,it-1, "R");
         }
+        
         double* finalrhs = (double*) malloc ((it-1)*sizeof(double));
         for (int i=0;i<it-1;i++){
             finalrhs[i] = Q[i][0]*beta; // prima riga * beta ((beta *Q^Te1))
@@ -151,17 +152,24 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
             }
             y[i] /= R[i][i];
         }
-        double acc;
-        for (int i=0; i<nrows; i++){
-            acc = 0;
-            for (int j = 0; j< it-1;j++){
-                acc += V[j][i]*y[j];
-            }
-            x[i] = acc;
-        }
-
-        // for (int j = 0; j < it-1; j++) {
-        //     daxyps(nrows, x, V[j], y[j], np);
+        // double acc;
+        // for (int i=0; i<nrows; i++){
+        //     acc = 0;
+        //     for (int j = 0; j< it-1;j++){
+        //         acc += V[j][i]*y[j];
+        //     }
+        //     x[i] = acc;
         // }
+
+        // // print x
+        // printf("x:\n ");
+        // for (int i=0;i<nrows;i++){
+        //     printf("%f ", x[i]);
+        // }
+        // printf("\n");
+
+        for (int j = 0; j < it-1; j++) {
+            daxyps(nrows, x, V[j], y[j], np);
+        }
     return;
 }
