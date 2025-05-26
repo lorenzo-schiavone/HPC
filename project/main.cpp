@@ -6,8 +6,6 @@ using namespace std;
 #include <omp.h>
 #include <chrono>
 
-
-
 #include "topol.h"
 #include "gmres.h"
 
@@ -224,10 +222,10 @@ int main(int argc, const char* argv[]){
 
    double* x = (double *) malloc(nnodes*sizeof(double));
    for (int i=0;i<nnodes;i++){
-      x[i] = 0;
+      x[i] = 0.;
    }
    printf("gmres start\n");
-   gmres(nnodes, iat, ja, coefA, q, 1e-6, 100, np, x);
+   gmres(nnodes, iat, ja, coefA, q, 1e-6, 800, np, x);
    printf("gmres end\n");
    printf("x: \n");
    for (int i=0; i<nnodes; i++){

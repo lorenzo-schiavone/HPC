@@ -58,7 +58,25 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
     for (int i=0; i<nrows; i++){
         x[i]=0.;
     }
-    double beta = norm(rhs, nrows, np);
+
+    double* diag = (double*) malloc(nrows * sizeof(double));
+    # pragma omp parallel for num_threads(np)
+    for (int i = 0; i < nrows; i++) {
+        diag[i] = 1.0;
+        for (int j = iat[i]; j < iat[i+1]; j++) {
+            if (ja[j] == i) { 
+                diag[i] = coef[j];
+                break;
+            }
+        }
+    }
+    double* Mb = (double*) malloc(nrows * sizeof(double));
+    for (int i = 0; i < nrows; i++) {
+        Mb[i] = rhs[i] / diag[i];
+    }
+    double beta = norm(Mb, nrows, np); 
+    
+    // double beta = norm(Mb, nrows, np);
 
     double* resvec = (double*) malloc (maxit*sizeof(double));
     resvec[0] = beta;
@@ -77,7 +95,7 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
     }
     // first col initialization
     for (int i=0; i<nrows;i++){
-        V[0][i] = rhs[i]/beta;
+        V[0][i] = Mb[i]/beta;
     }
 
     double** H = (double**) malloc(maxit*sizeof(double*));
@@ -98,10 +116,13 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
     int it = 0;
     bool flag = false;
     printf("exit_cond: %f\n", exit_cond);
-    while ((resvec[it] > exit_cond) && (it < maxit)){
+    while ((resvec[it] > exit_cond) && (it < maxit-1)){
         it ++;
         matcsrvecprod(nrows, iat, ja, coef, V[it-1], vnew, np); // in place on (old) vnew
-        
+        #pragma omp parallel for num_threads(np)
+        for (int i = 0; i < nrows; i++) {
+            vnew[i] /= diag[i]; // vnew = M^{-1} * A * V[it-1]
+        }
         for (int j = 0; j< it; j++){
             hj = scalarProd(vnew, V[j],nrows,np);
             daxyps(nrows, vnew, V[j], - hj, np); // in place for vnew
@@ -109,7 +130,7 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
         }
 
         hnew = norm(vnew, nrows, np);
-        if (hnew < 1e-14){
+        if (hnew < 1e-10){
             printf("happy breakdown!\n");
             qr(H, it, it, &Q, &R);
             flag = true;
@@ -152,22 +173,6 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
             }
             y[i] /= R[i][i];
         }
-        // double acc;
-        // for (int i=0; i<nrows; i++){
-        //     acc = 0;
-        //     for (int j = 0; j< it-1;j++){
-        //         acc += V[j][i]*y[j];
-        //     }
-        //     x[i] = acc;
-        // }
-
-        // // print x
-        // printf("x:\n ");
-        // for (int i=0;i<nrows;i++){
-        //     printf("%f ", x[i]);
-        // }
-        // printf("\n");
-
         for (int j = 0; j < it-1; j++) {
             daxyps(nrows, x, V[j], y[j], np);
         }
