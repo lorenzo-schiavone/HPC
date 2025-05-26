@@ -82,7 +82,7 @@ int main(int argc, const char* argv[]){
 
    // READ COORD
    ifstream coord_file(argv[2]);
-   // Read header (i have added)
+   // Read header (i have added it )
    int nnodes;
    coord_file >> nnodes;
    double *coord_buff = (double*) malloc(3*nnodes*sizeof(double)); // we are in 3d
@@ -111,26 +111,6 @@ int main(int argc, const char* argv[]){
    double* v = (double*) malloc(3*sizeof(double));
    v[0]=5.;v[1]=5.;v[2]=5.;
 
-   double* volumes = (double*) malloc(ntet*sizeof(double));
-   
-   # pragma omp parallel for num_threads(np)
-   for (int i=0;i<ntet; i++){
-      // volumes[i] = 1/6 * det[ 1....] det3x3
-      int* tet = tetra[i];
-      double* n0=coord[tet[0]];
-      double* n1=coord[tet[1]];
-      double* n2=coord[tet[2]];
-      double* n3=coord[tet[3]];
-
-      volumes[i] = (det3(n1,n2,n3)-
-                   det3(n0,n2,n3)+
-                   det3(n0,n1,n3)-
-                   det3(n0,n1,n2))/6;
-   }
-   // printf("Volumes: \n");
-   // for (int i=0;i<10; i++){
-   //    printf("%f\n", volumes[i]);
-   // }
    // we have to build H, B, P csr matrix.
    // so just coefH, coefB, coefP
    double* coefH = (double*) malloc (nterm * sizeof(double));
@@ -145,7 +125,14 @@ int main(int argc, const char* argv[]){
    # pragma omp parallel for num_threads(np)
    for (int jj=0;jj<ntet;jj++){
       int* tet = tetra[jj];
-      double vol = volumes[jj];
+      double* n0=coord[tet[0]];
+      double* n1=coord[tet[1]];
+      double* n2=coord[tet[2]];
+      double* n3=coord[tet[3]];       
+      double vol = (det3(n1,n2,n3)-
+                   det3(n0,n2,n3)+
+                   det3(n0,n1,n3)-
+                   det3(n0,n1,n2))/6;
       double* a = (double*) malloc(4*sizeof(double));
       double* b = (double*) malloc(4*sizeof(double));
       double* c = (double*) malloc(4*sizeof(double));
@@ -240,32 +227,14 @@ int main(int argc, const char* argv[]){
       x[i] = 0;
    }
    printf("gmres start\n");
-   gmres(nnodes, iat, ja, coefA, q, 1e-10, 100, np, x);
+   gmres(nnodes, iat, ja, coefA, q, 1e-6, 100, np, x);
    printf("gmres end\n");
    printf("x: \n");
    for (int i=0; i<nnodes; i++){
       printf("%f ", x[i]);
    }
    printf("\n");
-   // // some print of coef: all empty :(
-   // printf("coefH: \n");
-   // for (int i=0; i<10; i++){
-   //    printf("%f ", coefH[i]);
-   // }
-   // printf("\n");
-   // printf("coefB: \n");
-   // for (int i=0; i<10; i++){
-   //    printf("%f ", coefB[i]);
-   // }
-   // printf("\n");
-
-   // printf("coefP: \n");
-   // for (int i=0; i<10; i++){
-   //    printf("%f ", coefP[i]);
-   // }
-   // printf("\n");
-
-
+   
    // Free memory
    free(coord);
    free(coord_buff);

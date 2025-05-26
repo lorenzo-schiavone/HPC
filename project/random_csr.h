@@ -1,0 +1,1 @@
+void generate_stiffness_csr(int nrows, double*& coef, int*& ja, int*& iat);
