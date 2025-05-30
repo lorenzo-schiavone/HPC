@@ -44,8 +44,8 @@ void qr(double** A, double** Q, double** R, int nr, int nc) {
 int main() {
     // Define the dimensions of A.
     // For example, try a rectangular matrix with more rows than columns.
-    int nr = 500; // number of rows
-    int nc = 100;  // number of columns
+    int nr = 11; // number of rows
+    int nc = 10;  // number of columns
 
     // Allocate A (nr x nc)
     double** A = new double*[nr];

@@ -35,27 +35,17 @@ void qr(double** A, int nrow, int ncol, double*** Q_out, double*** R_out){
     R[i] = &Rbuf[i*nrow];
   }
   // set R, Q ==0
-  for (int j=0; j<nrow; j++){
-     for (int i=0; i<nrow; i++){
-      Q[j][i]= 0.;
-     }
-  }
+  // for (int j=0; j<nrow; j++){
+  //    for (int i=0; i<nrow; i++){
+  //     Q[j][i]= 0.;
+  //    }
+  // }
   for (int j=0; j<ncol; j++){
      for (int i=0; i<nrow; i++){
       R[j][i]= 0.;
      }
   }
-  // int min_d;
-  // if (nrow<ncol){
-  //   min_d = nrow;
-  // }
-  // else{
-  //   min_d = ncol;
-  // }
   int min_d = (nrow<ncol) ? nrow : ncol;
-  // printf("nrow: %u\n", nrow);
-  // printf("ncol: %u\n", ncol);
-  // printf("min_d = %u\n", min_d);
 
   // copy column of A into Q 
   for (int j=0; j<min_d; j++){
@@ -76,24 +66,27 @@ void qr(double** A, int nrow, int ncol, double*** Q_out, double*** R_out){
   for (int i=0;i<min_d;i++){
     // normalizzo colonna Q[i]
     alpha= norm(Q[i], nrow);
-    if (alpha < 1e-10){
-      break; // è una colonna di zeri non bene
-    }
+    // if (alpha < 1e-10){
+    //   break; // è una colonna di zeri non bene
+    // }
     for (int j=0;j<nrow;j++){
         Q[i][j]/=alpha;
     }
     R[i][i] = alpha;
 
     // rimuovo componenti parallele a Q[i] da Q[j] per j> i
-    for (int j=i+1;j<nrow; j++){
+    for (int j=i+1;j<ncol; j++){
       alpha = scalarprod(Q[i], Q[j], nrow);
       for (int jj=0;jj<nrow;jj++){
-              Q[j][jj]-=(alpha*Q[i][jj]);
-          }
-      if (j<ncol){
-         R[j][i] = alpha;
+        Q[j][jj]-=(alpha*Q[i][jj]);
       }
-     
+      R[j][i] = alpha;
+    }
+    for (int j=ncol;j<nrow; j++){
+      alpha = scalarprod(Q[i], Q[j], nrow);
+      for (int jj=0;jj<nrow;jj++){
+        Q[j][jj]-=(alpha*Q[i][jj]);
+      }
     }
   }
   // completo base ortonormale di Q -> non devo scrivere su R 

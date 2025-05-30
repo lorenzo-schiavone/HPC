@@ -71,6 +71,7 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
         }
     }
     double* Mb = (double*) malloc(nrows * sizeof(double));
+    #pragma parallel for num_threads(np)
     for (int i = 0; i < nrows; i++) {
         Mb[i] = rhs[i] / diag[i];
     }
@@ -115,7 +116,7 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
     double hnew =0.;
     int it = 0;
     bool flag = false;
-    printf("exit_cond: %f\n", exit_cond);
+    // printf("exit_cond: %f\n", exit_cond);
     while ((resvec[it] > exit_cond) && (it < maxit-1)){
         it ++;
         matcsrvecprod(nrows, iat, ja, coef, V[it-1], vnew, np); // in place on (old) vnew
@@ -123,6 +124,7 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
         for (int i = 0; i < nrows; i++) {
             vnew[i] /= diag[i]; // vnew = M^{-1} * A * V[it-1]
         }
+
         for (int j = 0; j< it; j++){
             hj = scalarProd(vnew, V[j],nrows,np);
             daxyps(nrows, vnew, V[j], - hj, np); // in place for vnew
@@ -146,17 +148,17 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
             // it ++;
             resvec[it] = fabs(beta*Q[it][0]);
 
-            printf("resvec[%u]: ", it);
-            printf("%f\n", resvec[it] );
+            // printf("resvec[%u]: ", it);
+            // printf("%f\n", resvec[it] );
         }
     }
-    printf("exited from while loop!\n");
+    // printf("exited from while loop!\n");
     if (flag){
-        printMatrix(Q, it-1,it-1, "Q");
-        printMatrix(R, it-1,it-1, "R");
+        // printMatrix(Q, it-1,it-1, "Q");
+        // printMatrix(R, it-1,it-1, "R");
     } else{
-        printMatrix(Q, it,it, "Q");
-        printMatrix(R, it,it-1, "R");
+        // printMatrix(Q, it,it, "Q");
+        // printMatrix(R, it,it-1, "R");
         }
         
         double* finalrhs = (double*) malloc ((it-1)*sizeof(double));

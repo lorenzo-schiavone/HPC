@@ -96,18 +96,14 @@ int main(int argc, const char* argv[]){
    }
    // Close the input file
    coord_file.close();
-
-   // Set C-style of coord
-   for (int i = 0; i < nnodes; i++)
-      for (int j = 0; j < 3; j++) coord[i][j]--;
-
+   
    // -------------------------------------------------------------------------------------------------------------------------------
    std::chrono::time_point<std::chrono::high_resolution_clock> startTime = std::chrono::high_resolution_clock::now();
    // diffusion and flow velocity
    double* D = (double*) malloc(3*sizeof(double));
    D[0]=.1;D[1]=.1;D[2]=1.;
    double* v = (double*) malloc(3*sizeof(double));
-   v[0]=5.;v[1]=5.;v[2]=5.;
+   v[0]=1.;v[1]=1.;v[2]=1.;
 
    // we have to build H, B, P csr matrix.
    // so just coefH, coefB, coefP
@@ -121,7 +117,7 @@ int main(int argc, const char* argv[]){
    }
 
    # pragma omp parallel for num_threads(np)
-   for (int jj=0;jj<ntet;jj++){
+   for (int jj=0;jj<1;jj++){
       int* tet = tetra[jj];
       double* n0=coord[tet[0]];
       double* n1=coord[tet[1]];
@@ -131,20 +127,62 @@ int main(int argc, const char* argv[]){
                    det3(n0,n2,n3)+
                    det3(n0,n1,n3)-
                    det3(n0,n1,n2))/6;
+      printf("volume: %f\n", vol);
       double* a = (double*) malloc(4*sizeof(double));
       double* b = (double*) malloc(4*sizeof(double));
       double* c = (double*) malloc(4*sizeof(double));
       double* d = (double*) malloc(4*sizeof(double));
 
       for (int ii=0;ii<4;ii++){
-         double* nj=coord[tet[(ii+1)%4]];
-         double* nk=coord[tet[(ii+2)%4]];
-         double* nm=coord[tet[(ii+3)%4]];
+         uint j = tet[(ii+1)%4];
+         uint k = tet[(ii+2)%4];
+         uint m = tet[(ii+3)%4];
+         printf("%u %u %u\n",j+1,k+1,m+1);
+         double* nj=coord[j];
+         double* nk=coord[k];
+         double* nm=coord[m];
+
+         // print matrix [nj,nk,nm]
+         printf("M: ");
+         for (int i=0;i<3;i++){
+            printf("%f ", nj[i]);
+         } printf("\n");
+         for (int i=0;i<3;i++){
+            printf("%f ", nk[i]);
+         } printf("\n");
+         for (int i=0;i<3;i++){
+            printf("%f ", nm[i]);
+         } printf("\n");
+
+
+
          a[ii] = det3(nj,nk,nm);
          b[ii] = - (nk[1]*nm[2]-nm[1]*nk[2] - (nj[1]*nm[2]-nj[2]*nm[1])+nj[1]*nk[2]-nj[2]*nk[1]);
          c[ii] = (nk[0]*nm[2]-nm[0]*nk[2] - (nj[0]*nm[2]-nj[2]*nm[0])+nj[0]*nk[2]-nj[2]*nk[0]);
-         d[ii] = (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[0]*nk[2]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
+         d[ii] = (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[1]*nk[0]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
       }
+
+      // print a, b, c, d
+      printf("a: \n");
+      for (int i=0;i<4;i++){
+         printf("%f ", a[i]);
+      }
+      printf("\n");
+      printf("b: \n");
+      for (int i=0;i<4;i++){
+         printf("%f ", b[i]);
+      }
+      printf("\n");
+      printf("c: \n");
+      for (int i=0;i<4;i++){
+         printf("%f ", c[i]);
+      }
+      printf("\n");
+      printf("d: \n");
+      for (int i=0;i<4;i++){
+         printf("%f ", d[i]);
+      }
+      printf("\n");
 
       
       double *Hloc_buf = (double*) malloc(4*4*sizeof(double));
@@ -204,37 +242,44 @@ int main(int argc, const char* argv[]){
 
    printf("assembly time taken %f\n", timeTaken.count());
 
-   //// HERE WE TRY TO MAKE A GMRES
-   startTime = std::chrono::high_resolution_clock::now();
-   double* coefA = (double*) malloc (nterm * sizeof(double));
-   double dt = 0.1;
-   for (int i=0;i<nterm; i++){
-      coefA[i] = coefB[i]+coefH[i] + coefP[i]/dt;
-   }
-   // printf("coefA build\n");
-   double* x_true = (double*) malloc(nnodes*sizeof(double));
-   for(int i=0;i<nnodes;i++){
-      x_true[i] = 1.0;
-   }
+   // Export P,B, H
+   FILE *f;
 
-   double* q = (double*) malloc(nnodes*sizeof(double));
-   matcsrvecprod(nnodes, iat, ja, coefA, x_true, q, np);
-   // printf("rhs build\n");
+    // Export iat
+    f = fopen("iat.txt", "w");
+    for (int i = 0; i <= nn; ++i)
+        fprintf(f, "%d\n", iat[i]);
+    fclose(f);
 
-   double* x = (double *) malloc(nnodes*sizeof(double));
-   for (int i=0;i<nnodes;i++){
-      x[i] = 0.;
-   }
-   gmres(nnodes, iat, ja, coefA, q, 1e-12, 80, np, x);
-   endTime = std::chrono::high_resolution_clock::now();
-   timeTaken = std::chrono::duration<double>(endTime - startTime);
+    // Export ja
+    f = fopen("ja.txt", "w");
+    for (int i = 0; i < nterm; ++i)
+        fprintf(f, "%d\n", ja[i]);
+    fclose(f);
 
-   printf("gmres time taken %f\n", timeTaken.count());
-   printf("x: \n");
-   for (int i=0; i<20; i++){
-      printf("%f ", x[i]);
-   }
-   printf("\n");
+    // Export coef
+    f = fopen("coefH.txt", "w");
+    for (int i = 0; i < nterm; ++i)
+        fprintf(f, "%.16g\n", coefH[i]);
+    fclose(f);
+
+    // Export coef
+    f = fopen("coefB.txt", "w");
+    for (int i = 0; i < nterm; ++i)
+        fprintf(f, "%.16g\n", coefB[i]);
+    fclose(f);
+
+    // Export coef
+    f = fopen("coefP.txt", "w");
+    for (int i = 0; i < nterm; ++i)
+        fprintf(f, "%.16g\n", coefP[i]);
+    fclose(f);
+
+    // Export nnz
+    f = fopen("nnz.txt", "w");
+    fprintf(f, "%d\n", nterm);
+    fclose(f);
+   
    
    // Free memory
    free(coord);
