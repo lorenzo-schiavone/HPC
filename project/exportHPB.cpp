@@ -96,12 +96,12 @@ int main(int argc, const char* argv[]){
    }
    // Close the input file
    coord_file.close();
-   
+
    // -------------------------------------------------------------------------------------------------------------------------------
    std::chrono::time_point<std::chrono::high_resolution_clock> startTime = std::chrono::high_resolution_clock::now();
    // diffusion and flow velocity
    double* D = (double*) malloc(3*sizeof(double));
-   D[0]=.1;D[1]=.1;D[2]=1.;
+   D[0]=1.;D[1]=1.;D[2]=1.;
    double* v = (double*) malloc(3*sizeof(double));
    v[0]=1.;v[1]=1.;v[2]=1.;
 
@@ -117,7 +117,7 @@ int main(int argc, const char* argv[]){
    }
 
    # pragma omp parallel for num_threads(np)
-   for (int jj=0;jj<1;jj++){
+   for (int jj=0;jj<ntet;jj++){
       int* tet = tetra[jj];
       double* n0=coord[tet[0]];
       double* n1=coord[tet[1]];
@@ -127,7 +127,7 @@ int main(int argc, const char* argv[]){
                    det3(n0,n2,n3)+
                    det3(n0,n1,n3)-
                    det3(n0,n1,n2))/6;
-      printf("volume: %f\n", vol);
+      // printf("[%u]volume: %e\n", jj, vol);
       double* a = (double*) malloc(4*sizeof(double));
       double* b = (double*) malloc(4*sizeof(double));
       double* c = (double*) malloc(4*sizeof(double));
@@ -137,54 +137,37 @@ int main(int argc, const char* argv[]){
          uint j = tet[(ii+1)%4];
          uint k = tet[(ii+2)%4];
          uint m = tet[(ii+3)%4];
-         printf("%u %u %u\n",j+1,k+1,m+1);
          double* nj=coord[j];
          double* nk=coord[k];
          double* nm=coord[m];
-
-         // print matrix [nj,nk,nm]
-         printf("M: ");
-         for (int i=0;i<3;i++){
-            printf("%f ", nj[i]);
-         } printf("\n");
-         for (int i=0;i<3;i++){
-            printf("%f ", nk[i]);
-         } printf("\n");
-         for (int i=0;i<3;i++){
-            printf("%f ", nm[i]);
-         } printf("\n");
-
-
-
          a[ii] = det3(nj,nk,nm);
          b[ii] = - (nk[1]*nm[2]-nm[1]*nk[2] - (nj[1]*nm[2]-nj[2]*nm[1])+nj[1]*nk[2]-nj[2]*nk[1]);
          c[ii] = (nk[0]*nm[2]-nm[0]*nk[2] - (nj[0]*nm[2]-nj[2]*nm[0])+nj[0]*nk[2]-nj[2]*nk[0]);
          d[ii] = (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[1]*nk[0]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
       }
 
-      // print a, b, c, d
-      printf("a: \n");
-      for (int i=0;i<4;i++){
-         printf("%f ", a[i]);
-      }
-      printf("\n");
-      printf("b: \n");
-      for (int i=0;i<4;i++){
-         printf("%f ", b[i]);
-      }
-      printf("\n");
-      printf("c: \n");
-      for (int i=0;i<4;i++){
-         printf("%f ", c[i]);
-      }
-      printf("\n");
-      printf("d: \n");
-      for (int i=0;i<4;i++){
-         printf("%f ", d[i]);
-      }
-      printf("\n");
+      // // print a, b, c, d
+      // printf("a: \n");
+      // for (int i=0;i<4;i++){
+      //    printf("%f ", a[i]);
+      // }
+      // printf("\n");
+      // printf("b: \n");
+      // for (int i=0;i<4;i++){
+      //    printf("%f ", b[i]);
+      // }
+      // printf("\n");
+      // printf("c: \n");
+      // for (int i=0;i<4;i++){
+      //    printf("%f ", c[i]);
+      // }
+      // printf("\n");
+      // printf("d: \n");
+      // for (int i=0;i<4;i++){
+      //    printf("%f ", d[i]);
+      // }
+      // printf("\n");
 
-      
       double *Hloc_buf = (double*) malloc(4*4*sizeof(double));
       double **Hloc = (double**) malloc(4*sizeof(double*));
       double *Ploc_buf = (double*) malloc(4*4*sizeof(double));
@@ -204,12 +187,30 @@ int main(int argc, const char* argv[]){
          double* Pi = Ploc[i];
          double* Bi = Bloc[i];
          for (int j=0;j<4;j++){
-            Hi[j] = (D[0]*b[i]*b[j] + D[1]*c[i]*c[j] + D[2]*d[i]*d[j])/ (36 * abs(vol));
+            Hi[j] = (D[0]*b[i]*b[j]+ D[1]*c[i]*c[j] + D[2]*d[i]*d[j])/(36 * abs(vol)); // 
             Pi[j] = abs(vol)/20;
-            Bi[j] = sign(vol)/24 * (v[0]*b[j]+v[1]*c[j]+v[2]*d[j]);
+            Bi[j] = sign(vol)/24 * (v[0]*b[j]+v[1]*c[j]+v[2]*d[j]); //*sign(vol)
          }
          Pi[i]*=2;
       }
+//       if (jj== 72 || jj ==251){
+// // print Bloc
+//       printf("Bloc:\n");
+//       for (int i=0;i<4;i++){
+//             printf("%e ", Bloc[0][i]);
+//          } printf("\n");
+//          for (int i=0;i<4;i++){
+//             printf("%e ", Bloc[1][i]);
+//          } printf("\n");
+//          for (int i=0;i<4;i++){
+//             printf("%e ", Bloc[2][i]);
+//          } printf("\n");
+//          for (int i=0;i<4;i++){
+//             printf("%e ", Bloc[3][i]);
+//          } printf("\n");
+//       }
+      
+
       
       // put them inside coefH, coefP, coefB
       // omp atomic or whatever here like assembly only row for nodes deputed to the process
