@@ -27,12 +27,20 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
     double* Vbuff = (double*)malloc(nrows * maxit * sizeof(double));
     for (int i = 0; i < maxit; i++) V[i] = &Vbuff[nrows * i];
 
-    double** H = (double**)malloc(maxit * sizeof(double*));
-    double* Hbuff = (double*)malloc(maxit * maxit * sizeof(double));
-    for (int i = 0; i < maxit; i++) H[i] = &Hbuff[maxit * i];
+    // double** H = (double**)malloc(maxit * sizeof(double*));
+    // double* Hbuff = (double*)malloc(maxit * maxit * sizeof(double));
+    // for (int i = 0; i < maxit; i++) H[i] = &Hbuff[maxit * i];
+    int nrowH = maxit + 1;  
+    int ncolH = maxit;      
+    double** H = (double**) malloc(ncolH * sizeof(double*));
+    double*  Hbuff = (double*) malloc(nrowH * ncolH * sizeof(double));
+    memset(Hbuff, 0, nrowH * ncolH * sizeof(double));
+    for(int j = 0; j < ncolH; j++){
+        H[j] = &Hbuff[j * nrowH];
+    }
 
     double* vnew = (double*)malloc(nrows * sizeof(double));
-    double* vold = (double*)malloc(nrows * sizeof(double));
+    double* vold; // = (double*)malloc(nrows * sizeof(double));
     double* Vj;
 
     double** Q; double** R;
@@ -96,18 +104,15 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
 
                 // Orthogonalization
                 for (int j = 0; j < it; j++) {
-                    
-                    #pragma omp single
-                    {
                     Vj = V[j];
                     hj = 0.0;
-                    }
+                    #pragma omp barrier
                     #pragma omp for reduction(+:hj)
                     for (int i = 0; i < nrows; i++){
                         hj += Vj[i] * vnew[i];
                     } 
                     H[it-1][j] = hj;
-
+                    
                     #pragma omp for
                     for (int i = 0; i < nrows; i++){
                         vnew[i] -= hj * Vj[i];
@@ -115,10 +120,8 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
                 }
 
                 // Compute hnew
-                #pragma omp single
-                {
-                    hnew = 0.0;
-                }
+                hnew = 0.0;
+                #pragma omp barrier
                 #pragma omp for reduction(+:hnew)
                 for (int i = 0; i < nrows; i++) {
                     hnew += vnew[i] * vnew[i];
@@ -126,7 +129,7 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
                 #pragma omp single
                 {
                     hnew = sqrt(hnew);
-                    if (hnew < 1e-10) {
+                    if (hnew < 1e-15) {
                     printf("happy breakdown!\n");
                     qr(H, it, it, &Q, &R);
                     flag = true;
@@ -144,8 +147,16 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
                         resvec[it] = fabs(beta * Q[it][0]);
                         vold = V[it]; 
                     }
+                    #pragma omp barrier
                 }
             }
+        }
+        if (it == maxit -1){
+            printf("No convergence: res= %e\n", resvec[it-1]);
+            qr(H, it+1, it, &Q, &R);
+        }
+        else{
+            printf("Number of iterations: %u\n", it);
         }
 
         // Solve Ry = beta Q^T e1
@@ -165,18 +176,17 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
                 x[i] += y[j] * V[j][i];
             }
         }
-        // free(finalrhs);
-        // free(y);
+        free(finalrhs);
+        free(y);
     }
 
-    // free(diag);
-    // free(Mb);
-    // free(resvec);
-    // free(V);
-    // free(Vbuff);
-    // free(H);
-    // free(Hbuff);
-    // free(vnew);
-    // free(vold);
+    free(diag);
+    free(Mb);
+    free(resvec);
+    free(V);
+    free(Vbuff);
+    free(H);
+    free(Hbuff);
+    free(vnew);
     return;
 }

@@ -97,17 +97,13 @@ int main(int argc, const char* argv[]){
    // Close the input file
    coord_file.close();
 
-   // Set C-style of coord
-   for (int i = 0; i < nnodes; i++)
-      for (int j = 0; j < 3; j++) coord[i][j]--;
-
    // -------------------------------------------------------------------------------------------------------------------------------
    std::chrono::time_point<std::chrono::high_resolution_clock> startTime = std::chrono::high_resolution_clock::now();
    // diffusion and flow velocity
    double* D = (double*) malloc(3*sizeof(double));
-   D[0]=.1;D[1]=.1;D[2]=1.;
+   D[0]=1.;D[1]=1.;D[2]=1.;
    double* v = (double*) malloc(3*sizeof(double));
-   v[0]=5.;v[1]=5.;v[2]=5.;
+   v[0]=1.;v[1]=1.;v[2]=1.;
 
    // we have to build H, B, P csr matrix.
    // so just coefH, coefB, coefP
@@ -143,7 +139,7 @@ int main(int argc, const char* argv[]){
          a[ii] = det3(nj,nk,nm);
          b[ii] = - (nk[1]*nm[2]-nm[1]*nk[2] - (nj[1]*nm[2]-nj[2]*nm[1])+nj[1]*nk[2]-nj[2]*nk[1]);
          c[ii] = (nk[0]*nm[2]-nm[0]*nk[2] - (nj[0]*nm[2]-nj[2]*nm[0])+nj[0]*nk[2]-nj[2]*nk[0]);
-         d[ii] = (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[0]*nk[2]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
+         d[ii] = (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[1]*nk[0]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
       }
 
       
@@ -221,15 +217,23 @@ int main(int argc, const char* argv[]){
    matcsrvecprod(nnodes, iat, ja, coefA, x_true, q, np);
    // printf("rhs build\n");
 
+
    double* x = (double *) malloc(nnodes*sizeof(double));
    for (int i=0;i<nnodes;i++){
       x[i] = 0.;
    }
-   gmres(nnodes, iat, ja, coefA, q, 1e-12, 80, np, x);
+   double tol = 1e-13;
+   int maxit = 100;
+   gmres(nnodes, iat, ja, coefA, q, tol, maxit, np, x);
    endTime = std::chrono::high_resolution_clock::now();
    timeTaken = std::chrono::duration<double>(endTime - startTime);
 
    printf("gmres time taken %f\n", timeTaken.count());
+   printf("q: \n");
+   for (int i=0; i<20; i++){
+      printf("%f ", q[i]);
+   }
+   printf("\n");
    printf("x: \n");
    for (int i=0; i<20; i++){
       printf("%f ", x[i]);
