@@ -116,8 +116,17 @@ int main(int argc, const char* argv[]){
       coefP[i]=0;
    }
 
+   int bsize = ntet / np;
    # pragma omp parallel num_threads(np)
-   {
+   {  
+      int myid = omp_get_thread_num();
+      int istart = myid*bsize;
+      int iend = (myid +1)*bsize; 
+      if (myid == np-1){
+         iend = ntet;
+      }
+
+      // thread private alloction
       double* a = (double*) malloc(4*sizeof(double));
       double* b = (double*) malloc(4*sizeof(double));
       double* c = (double*) malloc(4*sizeof(double));
@@ -128,25 +137,35 @@ int main(int argc, const char* argv[]){
       double **Ploc = (double**) malloc(4*sizeof(double*));
       double *Bloc_buf = (double*) malloc(4*4*sizeof(double));
       double **Bloc = (double**) malloc(4*sizeof(double*));
-      int kk=0;
       for (int i=0;i<4;i++){
-         Hloc[i] = &(Hloc_buf[kk]);
-         Ploc[i] = &(Ploc_buf[kk]);
-         Bloc[i] = &(Bloc_buf[kk]);
-         kk+=4;
+         Hloc[i] = &(Hloc_buf[i*4]);
+         Ploc[i] = &(Ploc_buf[i*4]);
+         Bloc[i] = &(Bloc_buf[i*4]);
       }
-      # pragma omp for 
+
       for (int jj=0;jj<ntet;jj++){
          int* tet = tetra[jj];
          double* n0=coord[tet[0]];
          double* n1=coord[tet[1]];
          double* n2=coord[tet[2]];
-         double* n3=coord[tet[3]];       
+         double* n3=coord[tet[3]];  
+         bool test[4];
+         for (int i=0;i<4;i++){
+            test[i] = (tet[i]<iend)&&(tet[i]>=istart);
+         }
+         // test[0] = (n0<iend)&&(n0>=istart);  
+         // test[1] = (n1<iend)&&(n1>=istart);  
+         // test[2] = (n2<iend)&&(n2>=istart);  
+         // test[3] = (n3<iend)&&(n3>=istart);
+         if (!(test[0]||test[1]||test[2]||test[3])) {
+            continue; // no node in the range
+         }
          double vol = (det3(n1,n2,n3)-
                      det3(n0,n2,n3)+
                      det3(n0,n1,n3)-
                      det3(n0,n1,n2))/6;
          
+
          for (int ii=0;ii<4;ii++){
             double* nj=coord[tet[(ii+1)%4]];
             double* nk=coord[tet[(ii+2)%4]];
@@ -158,6 +177,9 @@ int main(int argc, const char* argv[]){
          }
 
          for (int i=0;i<4; i++){
+            if (!(test[i])){
+               continue;
+            }
             double* Hi = Hloc[i];
             double* Pi = Ploc[i];
             double* Bi = Bloc[i];
@@ -175,21 +197,21 @@ int main(int argc, const char* argv[]){
 
          for (int i=0;i<4; i++){
             // tet[i] gives the row index
-            double* Hi = Hloc[i];
-            double* Pi = Ploc[i];
-            double* Bi = Bloc[i];
-            for (int j=0;j<4;j++){
+            int curr_node = tet[i];
+            if (test[i]){
+               double* Hi = Hloc[i];
+               double* Pi = Ploc[i];
+               double* Bi = Bloc[i];
+               for (int j=0;j<4;j++){
                // in ja from iat[tet[i]] look for tet[j]
-               int curr_node = tet[i];
-               for (int ii=iat[curr_node]; ii<iat[curr_node+1]; ii++){
-                  int jjj = tet[j];
-                  if (ja[ii] == jjj){
-                     #pragma omp atomic
-                     coefH[ii] += Hi[j];
-                     #pragma omp atomic
-                     coefP[ii] += Pi[j];
-                     #pragma omp atomic
-                     coefB[ii] += Bi[j];
+               
+                  for (int ii=iat[curr_node]; ii<iat[curr_node+1]; ii++){
+                     int jjj = tet[j];
+                     if (ja[ii] == jjj){
+                        coefH[ii] += Hi[j];
+                        coefP[ii] += Pi[j];
+                        coefB[ii] += Bi[j];
+                     }
                   }
                }
             }
@@ -215,20 +237,10 @@ int main(int argc, const char* argv[]){
    }
 
    double* q = (double*) malloc(nnodes*sizeof(double));
-   // matcsrvecprod(nnodes, iat, ja, coefA, x_true, q, np);
+   matcsrvecprod(nnodes, iat, ja, coefA, x_true, q, np);
    // printf("rhs build\n");
 
-   // more meaningful bc: 
-   // 1: Dirichlet on x=0
-   // find
-   for (int i=0;i<nnodes;i++){
-      if (coord[i][0]<1e-10){
-         q[i]=1.;
-      }
-      else { 
-         q[i]=0.;
-      }
-   }
+
    double* x = (double *) malloc(nnodes*sizeof(double));
    for (int i=0;i<nnodes;i++){
       x[i] = 0.;
