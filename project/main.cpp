@@ -102,17 +102,17 @@ int main(int argc, const char* argv[]){
    std::chrono::time_point<std::chrono::high_resolution_clock> startTime = std::chrono::high_resolution_clock::now();
    // diffusion and flow velocity
    double* D = (double*) malloc(3*sizeof(double));
-   D[0]=.02;D[1]=.01;D[2]=.01;
+   D[0]=.4;D[1]=.1;D[2]=.1;
    double* v = (double*) malloc(3*sizeof(double));
-   v[0]=1.;v[1]=1.;v[2]=1.5;
+   v[0]=1.;v[1]=1.;v[2]=2;
 
    printf("D:\n");
    printf("%f %f %f\n", D[0],D[1],D[2]);
    printf("v:\n");
    printf("%f %f %f\n", v[0],v[1],v[2]);
 
-   // we have to build H, B, P csr matrix.
-   // so just coefH, coefB, coefP
+   // ASSEMBLY
+   // we have to build H, B, P csr matrix. -> so just coefH, coefB, coefP
    double* coefH = (double*) malloc (nterm * sizeof(double));
    double* coefB = (double*) malloc (nterm * sizeof(double));
    double* coefP = (double*) malloc (nterm * sizeof(double));
@@ -172,26 +172,22 @@ int main(int argc, const char* argv[]){
             d[ii] = segno * (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[1]*nk[0]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
          }
 
-         // if (jj==76){
-            
+         // if (jj==76){ 
          //    printf("a:\n");
          //    for (int ii=0;ii<4;ii++){
          //       printf("%f ", a[ii]);
          //    }
          //    printf("\n");
-
          //    printf("b:\n");
          //    for (int ii=0;ii<4;ii++){
          //       printf("%f ", b[ii]);
          //    }
          //    printf("\n");
-
          //    printf("c:\n");
          //    for (int ii=0;ii<4;ii++){
          //       printf("%f ", c[ii]);
          //    }
          //    printf("\n");
-
          //    printf("d:\n");
          //    for (int ii=0;ii<4;ii++){
          //       printf("%f ", d[ii]);
@@ -375,7 +371,7 @@ int main(int argc, const char* argv[]){
    }
 
    double tol = 1e-9;
-   int maxit = 500;
+   int maxit = 10000;
    
    gmres(nnodes, iat, ja, coefAmod, rhs, tol, maxit, np, sol);
 
@@ -384,7 +380,7 @@ int main(int argc, const char* argv[]){
    printf("gmres time taken %f\n", timeTaken.count());
 
    printf("sol: \n");
-   for (int i=0; i<nn; i++){
+   for (int i=0; i<20; i++){
       printf("%1.2e\n", sol[i]);
    }
    printf("\n");

@@ -96,8 +96,9 @@ void gmres(int n,
     s[0]       = beta;
     resid[0]   = beta;
     double tb  = tol * beta;
+    // V0 = Mb / beta
     #pragma omp parallel for num_threads(np)
-    for(int i = 0; i < n; i++)
+    for(int i = 0; i < n; i++) 
         V[0][i] = Mb[i] / beta;
 
     int m_actual = 0;
@@ -152,7 +153,7 @@ void gmres(int n,
         // build new rotation to zero H(j+1,j)
         double hjj  = H_at(H,ncolH, j,   j),
                hj1j = H_at(H,ncolH, j+1, j),
-               rho  = std::hypot(hjj, hj1j);
+               rho  = std::hypot(hjj, hj1j); // sqrt(hjj*hjj + hj1j*hj1j)
         cs[j] =  hjj/rho;
         sn[j] =  hj1j/rho;
         H_at(H,ncolH, j,   j) = rho;
@@ -176,7 +177,7 @@ void gmres(int n,
     if(m_actual == 0) m_actual = maxit;
 
     printf("Number of iterations: %u\n", m_actual);
-    // 5) back‑solve R y = s[0..m_actual-1]  (R is H(0:m_actual,0:m_actual))
+    // 5) back‑solve R y = s[0..m_actual-1]  (R is [saved in] H(0:m_actual,0:m_actual))
     double *y = (double*)std::malloc(m_actual * sizeof(double));
     for(int i = m_actual-1; i >= 0; i--){
         double sum = 0.0;
