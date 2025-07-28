@@ -1,6 +1,5 @@
 // gmres_givens.cpp
 // GMRES with Jacobi preconditioning & Givens‐rotation QR updates
-// flat, row‑major H to avoid pointer‐of‐pointer bugs
 
 #include <cstdlib>
 #include <cstdio>
@@ -101,7 +100,7 @@ void gmres(int n,
     for(int i = 0; i < n; i++) 
         V[0][i] = Mb[i] / beta;
 
-    int m_actual = 0;
+    int m_actual = 0; // number of necessary iterations
 
     // GMRES main loop
     for(int m = 1; m <= maxit; m++){
@@ -133,7 +132,7 @@ void gmres(int n,
         H_at(H,ncolH, j+1, j) = vnorm;       // H(j+1, j)
 
         if(vnorm < 1e-15){
-            m_actual = j+1;
+            m_actual = j+1; //happy breakdown
             break;
         }
         #pragma omp parallel for num_threads(np)
@@ -153,7 +152,8 @@ void gmres(int n,
         // build new rotation to zero H(j+1,j)
         double hjj  = H_at(H,ncolH, j,   j),
                hj1j = H_at(H,ncolH, j+1, j),
-               rho  = std::hypot(hjj, hj1j); // sqrt(hjj*hjj + hj1j*hj1j)
+               rho  = std::sqrt(hjj*hjj + hj1j*hj1j); 
+            //    rho = std::hypot(hjj, hj1j); 
         cs[j] =  hjj/rho;
         sn[j] =  hj1j/rho;
         H_at(H,ncolH, j,   j) = rho;
