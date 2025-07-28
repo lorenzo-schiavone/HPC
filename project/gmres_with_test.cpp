@@ -6,7 +6,7 @@
 #include "random_csr.h"
 
 void testGMRES() {
-    printf("\nTesting GMRES decomposition...\n");
+    printf("\nTesting GMRES...\n");
     int nrows = 100;
     double* coef = nullptr;
     int* ja = nullptr;

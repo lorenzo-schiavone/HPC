@@ -51,9 +51,9 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
     double exit_cond;
     double* y;
 
-    // Initialize diag, x, Mb
     #pragma omp parallel num_threads(np)
     {
+        // Initialize diag, x, Mb
         #pragma omp for
         for (int i = 0; i < nrows; i++) {
             diag[i] = 1.0;
@@ -66,13 +66,13 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
                     break;
                 }
             }
-        }
+        } 
 
         // Compute beta
         #pragma omp for reduction(+:beta) 
         for (int i = 0; i < nrows; i++) {
             beta += Mb[i] * Mb[i];
-            }
+        }
         #pragma omp single
         {
             beta = sqrt(beta);
@@ -179,6 +179,11 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
         free(finalrhs);
         free(y);
     }
+    // printf("resvec: \n");
+    // for (int i= 0; i<it; i++){
+    //     printf("%e ", resvec[i]);
+    // }
+    // printf("\n");
 
     free(diag);
     free(Mb);

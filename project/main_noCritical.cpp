@@ -52,20 +52,12 @@ int main(int argc, const char* argv[]){
    for (int i = 0; i < ntet; i++)
       for (int j = 0; j < 4; j++) tetra[i][j]--;
    
-   // // save tet again (?)
-   // FILE *of = fopen("out_tet","w");
-   // for (int i = 0; i < ntet; i++){
-   //    for (int j = 0; j < 4; j++) fprintf(of," %10d",tetra[i][j]+1);
-   //    fprintf(of,"\n");
-   // }
-   // fclose(of);
-
    // Find the number of equations
    int nn = 0;
    for (int i = 0; i < ntet; i++)
       for (int j = 0; j < 4; j++) 
          if (tetra[i][j] > nn) nn = tetra[i][j];
-   nn++;
+   nn++; // C style
 
    printf("Number of equations: %d\n",nn);
 
@@ -73,7 +65,7 @@ int main(int argc, const char* argv[]){
    int nterm;
    int *iat = nullptr;
    int *ja = nullptr;
-   topol(nn,ntet,50,tetra,nterm,iat,ja); // is 30 enough? connectivity per node is ok, it would be very irregular
+   topol(nn,ntet,50,tetra,nterm,iat,ja); 
    printf("Topology created!\n");
    // here we have iat and ja ready to be used
    // -------------------------------------------------------------------------------------------------------------------------------
@@ -99,11 +91,12 @@ int main(int argc, const char* argv[]){
 
    // -------------------------------------------------------------------------------------------------------------------------------
    std::chrono::time_point<std::chrono::high_resolution_clock> startTime = std::chrono::high_resolution_clock::now();
+   
    // diffusion and flow velocity
    double* D = (double*) malloc(3*sizeof(double));
-   D[0]=1.;D[1]=1.;D[2]=1.;
+   D[0]=0.02;D[1]=0.01;D[2]=0.01;
    double* v = (double*) malloc(3*sizeof(double));
-   v[0]=1.;v[1]=1.;v[2]=1.;
+   v[0]=1.;v[1]=1.;v[2]=1.5;
 
    // we have to build H, B, P csr matrix.
    // so just coefH, coefB, coefP
@@ -167,13 +160,22 @@ int main(int argc, const char* argv[]){
          
 
          for (int ii=0;ii<4;ii++){
+            int idx[3]; int cnt=0;
+            for (int jj=0;jj<4;j++){
+               if (ii==jj){
+                  continue;
+               }
+               idx[cnt]=jj;
+               cnt+=1;
+            }
+            double segno = (-1)^(ii+1);
             double* nj=coord[tet[(ii+1)%4]];
             double* nk=coord[tet[(ii+2)%4]];
             double* nm=coord[tet[(ii+3)%4]];
-            a[ii] = det3(nj,nk,nm);
-            b[ii] = - (nk[1]*nm[2]-nm[1]*nk[2] - (nj[1]*nm[2]-nj[2]*nm[1])+nj[1]*nk[2]-nj[2]*nk[1]);
-            c[ii] = (nk[0]*nm[2]-nm[0]*nk[2] - (nj[0]*nm[2]-nj[2]*nm[0])+nj[0]*nk[2]-nj[2]*nk[0]);
-            d[ii] = (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[1]*nk[0]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
+            a[ii] = segno * det3(nj,nk,nm);
+            b[ii] = segno * (-1) * (nk[1]*nm[2]-nm[1]*nk[2] - (nj[1]*nm[2]-nj[2]*nm[1])+nj[1]*nk[2]-nj[2]*nk[1]);
+            c[ii] = segno * (nk[0]*nm[2]-nm[0]*nk[2] - (nj[0]*nm[2]-nj[2]*nm[0])+nj[0]*nk[2]-nj[2]*nk[0]);
+            d[ii] = segno * (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[1]*nk[0]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
          }
 
          for (int i=0;i<4; i++){

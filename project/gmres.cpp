@@ -55,9 +55,9 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
     
     // initial estimate is 0
     // x = (double*) malloc (nrows*sizeof(double));
-    for (int i=0; i<nrows; i++){
-        x[i]=0.;
-    }
+    // for (int i=0; i<nrows; i++){
+    //     x[i]=0.;
+    // }
 
     double* diag = (double*) malloc(nrows * sizeof(double));
     # pragma omp parallel for num_threads(np)
@@ -166,6 +166,8 @@ void gmres(int nrows, int* iat, int* ja, double* coef, double* rhs, double tol, 
             finalrhs[i] = Q[i][0]*beta; // prima riga * beta ((beta *Q^Te1))
         }
         // I have to solve Ry = beta Q^Te1
+
+        printf("iteration taken: %u\n", it);
 
         double* y = (double*) malloc((it-1)*sizeof(double));
         for (int i = it-2; i >= 0; i--) {

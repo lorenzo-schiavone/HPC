@@ -3,11 +3,12 @@
 #include <fstream>
 #include <cstdlib>
 using namespace std;
+#include <math.h>
 #include <omp.h>
 #include <chrono>
 
 #include "topol.h"
-#include "gmres.h"
+#include "gmres_parallel.h"
 
 double det3(double* r0,double* r1,double* r2 ){
    return r0[0]*(r1[1]*r2[2]-r2[1]*r1[2]) 
@@ -73,7 +74,7 @@ int main(int argc, const char* argv[]){
    int nterm;
    int *iat = nullptr;
    int *ja = nullptr;
-   topol(nn,ntet,50,tetra,nterm,iat,ja); // is 30 enough? connectivity per node is ok, it would be very irregular
+   topol(nn,ntet,50,tetra,nterm,iat,ja); 
    printf("Topology created!\n");
    // here we have iat and ja ready to be used
    // -------------------------------------------------------------------------------------------------------------------------------
@@ -81,7 +82,7 @@ int main(int argc, const char* argv[]){
    // READ COORD
    ifstream coord_file(argv[2]);
    // Read header (i have added it )
-   int nnodes;
+   int nnodes; // potrei usare nn. ntet invece va imposto a mano
    coord_file >> nnodes;
    double *coord_buff = (double*) malloc(3*nnodes*sizeof(double)); // we are in 3d
    double **coord = (double**) malloc(nnodes*sizeof(double*));
@@ -101,9 +102,14 @@ int main(int argc, const char* argv[]){
    std::chrono::time_point<std::chrono::high_resolution_clock> startTime = std::chrono::high_resolution_clock::now();
    // diffusion and flow velocity
    double* D = (double*) malloc(3*sizeof(double));
-   D[0]=1.;D[1]=1.;D[2]=1.;
+   D[0]=.02;D[1]=.01;D[2]=.01;
    double* v = (double*) malloc(3*sizeof(double));
-   v[0]=1.;v[1]=1.;v[2]=1.;
+   v[0]=1.;v[1]=1.;v[2]=1.5;
+
+   printf("D:\n");
+   printf("%f %f %f\n", D[0],D[1],D[2]);
+   printf("v:\n");
+   printf("%f %f %f\n", v[0],v[1],v[2]);
 
    // we have to build H, B, P csr matrix.
    // so just coefH, coefB, coefP
@@ -148,13 +154,49 @@ int main(int argc, const char* argv[]){
                      det3(n0,n1,n2))/6;
          
          for (int ii=0;ii<4;ii++){
-            double* nj=coord[tet[(ii+1)%4]];
-            double* nk=coord[tet[(ii+2)%4]];
-            double* nm=coord[tet[(ii+3)%4]];
-            a[ii] = det3(nj,nk,nm);
-            b[ii] = - (nk[1]*nm[2]-nm[1]*nk[2] - (nj[1]*nm[2]-nj[2]*nm[1])+nj[1]*nk[2]-nj[2]*nk[1]);
-            c[ii] = (nk[0]*nm[2]-nm[0]*nk[2] - (nj[0]*nm[2]-nj[2]*nm[0])+nj[0]*nk[2]-nj[2]*nk[0]);
-            d[ii] = (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[1]*nk[0]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
+            int idx[3]; int cnt=0;
+            for (int jj=0;jj<4;jj++){
+               if (ii==jj){
+                  continue;
+               }
+               idx[cnt]=jj;
+               cnt+=1;
+            }
+            double segno = pow(-1, ii); 
+            double* nj=coord[tet[idx[0]]];
+            double* nk=coord[tet[idx[1]]];
+            double* nm=coord[tet[idx[2]]];
+            a[ii] = segno * det3(nj,nk,nm);
+            b[ii] = segno * (-1) * (nk[1]*nm[2]-nm[1]*nk[2] - (nj[1]*nm[2]-nj[2]*nm[1])+nj[1]*nk[2]-nj[2]*nk[1]);
+            c[ii] = segno * (nk[0]*nm[2]-nm[0]*nk[2] - (nj[0]*nm[2]-nj[2]*nm[0])+nj[0]*nk[2]-nj[2]*nk[0]);
+            d[ii] = segno * (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[1]*nk[0]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
+         }
+
+         if (jj==76){
+            
+            printf("a:\n");
+            for (int ii=0;ii<4;ii++){
+               printf("%f ", a[ii]);
+            }
+            printf("\n");
+
+            printf("b:\n");
+            for (int ii=0;ii<4;ii++){
+               printf("%f ", b[ii]);
+            }
+            printf("\n");
+
+            printf("c:\n");
+            for (int ii=0;ii<4;ii++){
+               printf("%f ", c[ii]);
+            }
+            printf("\n");
+
+            printf("d:\n");
+            for (int ii=0;ii<4;ii++){
+               printf("%f ", d[ii]);
+            }
+            printf("\n");
          }
 
          for (int i=0;i<4; i++){
@@ -201,53 +243,149 @@ int main(int argc, const char* argv[]){
 
    printf("assembly time taken %f\n", timeTaken.count());
 
+   /// EXPORT iat, ja, coefH, coefB, coefB
+   FILE *f;
+
+   // Export iat
+   f = fopen("iat.txt", "w");
+   for (int i = 0; i <= nn; ++i)
+      fprintf(f, "%d\n", iat[i]);
+   fclose(f);
+
+   // Export ja
+   f = fopen("ja.txt", "w");
+   for (int i = 0; i < nterm; ++i)
+      fprintf(f, "%d\n", ja[i]);
+   fclose(f);
+
+   // Export coef
+   f = fopen("coefH.txt", "w");
+   for (int i = 0; i < nterm; ++i)
+      fprintf(f, "%.16g\n", coefH[i]);
+   fclose(f);
+
+   // Export coef
+   f = fopen("coefB.txt", "w");
+   for (int i = 0; i < nterm; ++i)
+      fprintf(f, "%.16g\n", coefB[i]);
+   fclose(f);
+
+   // Export coef
+   f = fopen("coefP.txt", "w");
+   for (int i = 0; i < nterm; ++i)
+      fprintf(f, "%.16g\n", coefP[i]);
+   fclose(f);
+
+   // Export nnz
+   f = fopen("nnz.txt", "w");
+   fprintf(f, "%d\n", nterm);
+   fclose(f);
+
    //// HERE WE TRY TO MAKE A GMRES
    startTime = std::chrono::high_resolution_clock::now();
    double* coefA = (double*) malloc (nterm * sizeof(double));
-   double dt = 0.1;
+   double* coefAmod = (double*) malloc (nterm * sizeof(double)); // to be modified for imposing dirichlet bc
+
+   double dt = 1;
    for (int i=0;i<nterm; i++){
-      coefA[i] = coefB[i]+coefH[i] + coefP[i]/dt;
+      coefA[i] = coefB[i]+coefH[i] + coefP[i]/dt; // if multiple steps i would need it
+      coefAmod[i] = coefA[i]; 
    }
+
    // printf("coefA build\n");
-   double* x_true = (double*) malloc(nnodes*sizeof(double));
-   for(int i=0;i<nnodes;i++){
-      x_true[i] = 1.0;
-   }
+   // double* x_true = (double*) malloc(nnodes*sizeof(double));
+   // for(int i=0;i<nnodes;i++){
+   //    x_true[i] = 1.0;
+   // }
 
-   double* q = (double*) malloc(nnodes*sizeof(double));
-   // matcsrvecprod(nnodes, iat, ja, coefA, x_true, q, np);
-   // printf("rhs build\n");
-
-   // more meaningful bc: 
-   // 1: Dirichlet on x=0
-   // find
+   double* bdval = (double*) malloc(nnodes*sizeof(double));
    for (int i=0;i<nnodes;i++){
-      if (coord[i][0]<1e-10){
-         q[i]=1.;
+      bdval[i]=0.;
+      if ((coord[i][0]< 1e-10)&&(coord[i][1]< 1e-10)&&(coord[i][2]< 1e-10)){
+         bdval[i]=1.;
       }
-      else { 
-         q[i]=0.;
+      else {
+         bdval[i]=0.;
       }
    }
-   double* x = (double *) malloc(nnodes*sizeof(double));
+   // printf("bdval: \n");
+   // for (int i=0; i<nn; i++){
+   //    printf("%1.4f ", bdval[i]);
+   // }
+   // printf("\n");   
+   double* Abdval = (double *) malloc(nnodes*sizeof(double));
    for (int i=0;i<nnodes;i++){
-      x[i] = 0.;
+      Abdval[i] = 0.;
    }
-   double tol = 1e-13;
-   int maxit = 100;
-   gmres(nnodes, iat, ja, coefA, q, tol, maxit, np, x);
+   matcsrvecprod(nn,iat,ja,coefA, bdval, Abdval, np); // xx is the boundary adjust
+
+   // printf("Abdval: \n");
+   // for (int i=0; i<nn; i++){
+   //    printf("%1.4f ", Abdval[i]);
+   // }
+   // printf("\n");   
+
+   // boundary impose
+   for (int iii = 0; iii < nn; iii++){
+      if (bdval[iii]){ // bc to impose, set the row equal to zero except for diagonal element
+         for (int j=iat[iii]; j<iat[iii+1];j++){
+            if (ja[j]==iii){
+               coefAmod[j]=1.;
+            }
+            else{
+               coefAmod[j]=0.;
+            }
+         }
+      }
+      else{ // set columns where q[j]=1 equal to 0;
+         for (int j=iat[iii]; j<iat[iii+1];j++){
+            if (bdval[ja[j]]){
+               coefAmod[j]=0.;
+            }
+         }
+      }
+   }
+
+   // building rhs
+   double* rhs = (double *) malloc(nnodes*sizeof(double));
+   for (int i=0;i<nnodes;i++){
+      rhs[i] = 0.;
+   }
+
+   matcsrvecprod(nn,iat,ja, coefP, bdval, rhs, np);
+   for (int i=0;i<nnodes;i++){
+      if (bdval[i]){
+         rhs[i] = bdval[i];
+      }
+      else{
+         rhs[i] = rhs[i]/dt - Abdval[i]; // (P/dt)u_prev - Abdval
+      }
+   } 
+
+   // printf("rhs: \n");
+   // for (int i=0; i<nn; i++){
+   //    printf("%f\n", rhs[i]);
+   // }
+   // printf("\n");  
+
+   // vector for the solution
+   double* sol = (double *) malloc(nnodes*sizeof(double));
+   for (int i=0;i<nnodes;i++){
+      sol[i] = 0.;
+   }
+
+   double tol = 1e-9;
+   int maxit = 500;
+   
+   gmres(nnodes, iat, ja, coefAmod, rhs, tol, maxit, np, sol);
+
    endTime = std::chrono::high_resolution_clock::now();
    timeTaken = std::chrono::duration<double>(endTime - startTime);
-
    printf("gmres time taken %f\n", timeTaken.count());
-   printf("q: \n");
-   for (int i=0; i<20; i++){
-      printf("%f ", q[i]);
-   }
-   printf("\n");
-   printf("x: \n");
-   for (int i=0; i<20; i++){
-      printf("%f ", x[i]);
+
+   printf("sol: \n");
+   for (int i=0; i<nn; i++){
+      printf("%1.2e\n", sol[i]);
    }
    printf("\n");
    
