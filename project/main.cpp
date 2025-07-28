@@ -172,32 +172,32 @@ int main(int argc, const char* argv[]){
             d[ii] = segno * (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[1]*nk[0]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
          }
 
-         if (jj==76){
+         // if (jj==76){
             
-            printf("a:\n");
-            for (int ii=0;ii<4;ii++){
-               printf("%f ", a[ii]);
-            }
-            printf("\n");
+         //    printf("a:\n");
+         //    for (int ii=0;ii<4;ii++){
+         //       printf("%f ", a[ii]);
+         //    }
+         //    printf("\n");
 
-            printf("b:\n");
-            for (int ii=0;ii<4;ii++){
-               printf("%f ", b[ii]);
-            }
-            printf("\n");
+         //    printf("b:\n");
+         //    for (int ii=0;ii<4;ii++){
+         //       printf("%f ", b[ii]);
+         //    }
+         //    printf("\n");
 
-            printf("c:\n");
-            for (int ii=0;ii<4;ii++){
-               printf("%f ", c[ii]);
-            }
-            printf("\n");
+         //    printf("c:\n");
+         //    for (int ii=0;ii<4;ii++){
+         //       printf("%f ", c[ii]);
+         //    }
+         //    printf("\n");
 
-            printf("d:\n");
-            for (int ii=0;ii<4;ii++){
-               printf("%f ", d[ii]);
-            }
-            printf("\n");
-         }
+         //    printf("d:\n");
+         //    for (int ii=0;ii<4;ii++){
+         //       printf("%f ", d[ii]);
+         //    }
+         //    printf("\n");
+         // }
 
          for (int i=0;i<4; i++){
             double* Hi = Hloc[i];
