@@ -1,0 +1,3 @@
+g++ -Xpreprocessor -fopenmp topol.cpp qr.cpp gmres_parallel.cpp main.cpp -L/usr/local/opt/libomp/lib -lomp -I/usr/local/opt/libomp/include -o new_main
+
+./new_main '/Users/lorenzoschiavone/Desktop/HPC/Tetrahedral_Grids/Native_Ord/Cubo_591.tetra' '/Users/lorenzoschiavone/Desktop/HPC/Tetrahedral_Grids/Native_Ord/Cubo_591.coor' 4

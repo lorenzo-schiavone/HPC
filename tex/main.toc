@@ -1,0 +1,10 @@
+\contentsline {section}{\numberline {1}Problem Statement and Strong Formulation}{1}{section.1}%
+\contentsline {section}{\numberline {2}Weak Galerkin Formulation}{2}{section.2}%
+\contentsline {section}{\numberline {3}Finite Elements and Assembly}{2}{section.3}%
+\contentsline {paragraph}{Convective Matrix}{3}{section*.7}%
+\contentsline {paragraph}{Stabilization Matrix}{3}{section*.8}%
+\contentsline {section}{\numberline {4}Imposing Boundary Conditions}{4}{section.4}%
+\contentsline {section}{\numberline {5}Numerical Solution}{4}{section.5}%
+\contentsline {section}{\numberline {6}Stabilized Solution}{5}{section.6}%
+\contentsline {section}{\numberline {7}Mass Balance}{6}{section.7}%
+\contentsline {paragraph}{Numerical results}{6}{section*.13}%
