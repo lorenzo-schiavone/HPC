@@ -10,17 +10,19 @@
 \maketitle
 \tableofcontents
 
+\pagebreak
+
 \section{Problem Statement and Strong Formulation}
 Consider the Transient Convection-Diffusion Equation 
 
 \begin{equation}\tag{$D$}\label{eq:strong}
     \begin{aligned}
     \frac{\partial}{\partial t}u -K \Delta u + \divg(\beta u) &=0 && \text{in } \Omega, \\
-    u(\mathbf{x}) &= 1 && \text{for } \mathbf{x} = \mathbf{0}  \\
-    \nabla u \cdot \nu &= 0 && \text{for } \mathbf{x}\in \partial\Omega \setminus \{\mathbf{0}\} 
+    u(\mathbf{x}) &= 1 && \text{for } \mathbf{x} = \Gamma  \\
+    \nabla u \cdot \nu &= 0 && \text{for } \mathbf{x}\in \partial\Omega \setminus \Gamma 
 \end{aligned}
 \end{equation}
-for $\Omega = [0,1] \times [0,1]\times [0,1]$, where $u=u(x,y,z)$ represents the scalar concentration of a solute dissolved in a fluid moving with velocity $\beta$ constant and homogenous and $K=\texttt{diag}(K_1,K_2,K_3)$ is the diffusion matrix assumed constant as well.
+for $\Omega = [0,1] \times [0,1]\times [0,1]$, $\Gamma = \{0\} \times \{0\} \times [0, .3]$, where $u=u(x,y,z)$ represents the scalar concentration of a solute dissolved in a fluid moving with velocity $\beta$ constant and homogenous and $K=\texttt{diag}(K_1,K_2,K_3)$ is the diffusion matrix assumed constant as well.
 
 \begin{figure}[H]
 \begin{center}
@@ -46,10 +48,11 @@ for $\Omega = [0,1] \times [0,1]\times [0,1]$, where $u=u(x,y,z)$ represents the
 \draw[thick] (0,1,1) -- (1,1,1);
 
 % Red dot at origin
-\filldraw[red] (0,0,0) circle (1pt);         
+\draw[thick, red] (0,0,0) -- (0,0,.3);
+%\filldraw[red] (0,0,0) circle (1pt);         
 
 \node[black] at (0.5, 0.5, 0.5) {$\Omega$};
-
+\node[red] at (-0.15, 0, 0.15) {$\Gamma$};
 \end{tikzpicture}
 \end{center}
 \caption{Domain of study.}
@@ -83,7 +86,7 @@ or
 that in matrix form reads \[ P\mathbf{u}' + H\mathbf{u} + B\mathbf{u} = 0\] where $\mathbf{u} = (u_1, \dots, u_{n_\text{nodes}})^T$, and the mass matrix $P$, the diffusion stiffness matrix $H$ and the non-symmetric convective matrix $B$ have components, respectively,
 \[P_{ij} = \int_\Omega \phi_j \phi_i\, d\Omega ,\quad\quad H_{ij} = \int_\Omega K \nabla \phi_j \cdot \nabla \phi_i\, d\Omega \quad \text{and} \quad B_{ij} = \int_\Omega  \divg( \beta \phi_j) \phi_i\,d\Omega.\]
 
-\section{Finite Elements and Assembly}
+\section{Finite Elements Matrices}
 
 Inside each tetrahedral element $e\in\mathcal{E}$ with vertices $\mathbf{x}_i, \mathbf{x}_j, \mathbf{x}_k, \mathbf{x}_m$ only the corresponding basis function $\phi_i,\phi_j,\phi_k,\phi_m$ are non zero. Their local expression is 
 \[
@@ -98,189 +101,283 @@ V^{(e)} = \frac{1}{6}\det \left(\begin{bmatrix}
 and the coefficients $\mathbf{a}, \mathbf{b}, \mathbf{c}, \mathbf{d}$ are computed so that $\phi_l(\mathbf{x_r}) = \delta_{lr}$, i.e., 
 
 \begin{align*}
-a_i &= & b_i &= & c_i &= & d_i &= \\
-a_j &= & b_j &= & c_j &= & d_j &= \\
-a_k &= & b_k &= & c_k &= & d_k &= \\
-a_m &= & b_m &= & c_m &= & d_m &= 
+a_i &= \det \begin{bmatrix} x_j & y_j & z_j \\ x_k & y_k & z_k \\ x_m & y_m & z_m \end{bmatrix}& b_i &= - \det \begin{bmatrix} 1 & y_j & z_j \\ 1 & y_k & z_k \\ 1 & y_m & z_m \end{bmatrix} & & & a_j &= - \det \begin{bmatrix} x_i & y_i & z_i \\ x_k & y_k & z_k \\ x_m & y_m & z_m \end{bmatrix}& b_j &= \det \begin{bmatrix} 1 & y_i & z_i \\ 1 & y_k & z_k \\ 1 & y_m & z_m \end{bmatrix}\\
+c_i &= \det \begin{bmatrix} 1 & x_j & z_j \\ 1 & x_k & z_k \\ 1 & x_m & z_m \end{bmatrix} & d_i &= - \det \begin{bmatrix} 1 & x_j & y_j \\ 1 & x_k & y_k \\ 1 & x_m & y_m \end{bmatrix}      & & & c_j &= - \det \begin{bmatrix} 1 & x_i & z_i \\ 1 & x_k & z_k \\ 1 & x_m & z_m \end{bmatrix}& d_j &= \det \begin{bmatrix} 1 & x_i & y_i \\ 1 & x_k & y_k \\ 1 & x_m & y_m \end{bmatrix}\\ \\
+a_k &= \det \begin{bmatrix} x_i & y_i & z_i \\ x_j & y_j & z_j \\ x_m & y_m & z_m \end{bmatrix}& b_k &= - \det \begin{bmatrix} 1 & y_i & z_i \\ 1 & y_j & z_j \\ 1 & y_m & z_m\end{bmatrix}& & & a_m &= - \det \begin{bmatrix} x_i & y_i & z_i \\ x_j & y_j & z_j \\ x_k & y_k & z_k \end{bmatrix}& b_m &= \det \begin{bmatrix} 1 & y_i & z_i \\ 1 & y_j & z_j \\ 1 & y_k & z_k\end{bmatrix} \\
+c_k &= \det \begin{bmatrix} 1 & x_i & z_i \\ 1 & x_j & z_j \\ 1 & x_m & z_m \end{bmatrix}& d_k &= - \det \begin{bmatrix} 1 & x_i & y_i \\ 1 & x_j & y_j \\ 1 & x_m & y_m \end{bmatrix}     & & & c_m &= - \det \begin{bmatrix} 1 & x_i & z_i \\ 1 & x_j & z_j \\ 1 & x_k & z_k \end{bmatrix}& d_m &=\det \begin{bmatrix} 1 & x_i & y_i \\ 1 & x_j & y_j \\ 1 & x_k & y_k \end{bmatrix}\\
 \end{align*}
-Then, \[\nabla \phi_i^{(e)} = \frac{1}{2\Delta^{(e)}}\begin{bmatrix}
-    b_i \\ c_i
+Then, \[\nabla \phi_i^{(e)} = \frac{1}{6V^{(e)}}\begin{bmatrix}
+    b_i \\ c_i \\ d_i
 \end{bmatrix} \] is constant and the local diffusion stiffness matrix is 
-\[ H_{ij}^{(e)} = K \int_e \frac{1}{2\Delta^{(e)}}(b_i, c_i)^T \cdot \frac{1}{2\Delta^{(e)}}(b_j, c_j)^T \,d\Omega = K \frac{\Delta^{(e)}}{{4\Delta^{(e)}}^2} (b_ib_j + c_ic_j) = \frac{K}{4\Delta^{(e)}} (b_ib_j + c_ic_j). \]
-Compactly, if we collect $\mathbf{b} = \begin{bmatrix} b_i & b_j & b_k \end{bmatrix}$ and, likewise $\mathbf{c} = \begin{bmatrix} c_i & c_j & c_k \end{bmatrix}$, we can write 
-\[ H^{(e)} = \frac{K}{4\Delta^{(e)}}(\mathbf{b}^T\mathbf{b} + \mathbf{c}^T\mathbf{c}).
+\begin{align*}
+H_{ij}^{(e)} &= \int_e K \frac{1}{6V^{(e)}}(b_i, c_i, d_i)^T \cdot \frac{1}{6V^{(e)}}(b_j, c_j, d_j)^T \,d\Omega \\ &= \frac{|V^{(e)}|}{{36V^{(e)}}^2} (K_1b_ib_j + K_2c_ic_j + K_3d_id_j) = \frac{1}{36|V^{(e)}|} (K_1b_ib_j + K_2c_ic_j + K_3d_id_j).
+\end{align*}
+Compactly, if we collect $\mathbf{b} = \begin{bmatrix} b_i & b_j & b_k & b_m\end{bmatrix}$ and, likewise $\mathbf{c} = \begin{bmatrix} c_i & c_j & c_k & c_m\end{bmatrix}$ and $\mathbf{d} = \begin{bmatrix} d_i & d_j & d_k & d_m \end{bmatrix}$, we can write 
+\[ H^{(e)} = \frac{1}{36|V^{(e)}|}(K_1\mathbf{b}^T\mathbf{b} + K_2\mathbf{c}^T\mathbf{c} +  K_3\mathbf{d}^T\mathbf{d}).
 \]
 \paragraph{Convective Matrix}
 Moreover, since \[
-\divg (\beta \phi_j) = \partial_x (\beta_x \phi_j) + \partial_y (\beta_y \phi_j) = \beta_x \partial_x \phi_j +  \beta_y \partial_y \phi_j = \beta \cdot \nabla \phi_j = \frac{1}{2\Delta^{(e)}}\left(\beta \cdot \begin{bmatrix}
+\divg (\beta \phi_j) = \beta \cdot \nabla \phi_j = \frac{1}{6V^{(e)}}\left(\beta \cdot \begin{bmatrix}
     \mathbf{b} \\
-    \mathbf{c}
-\end{bmatrix} \right)_j =: \frac{1}{2\Delta^{(e)}} \sigma_j,
+    \mathbf{c} \\
+    \mathbf{d}
+\end{bmatrix} \right)_j =: \frac{1}{6V^{(e)}} \sigma_j,
 \] 
 where $\sigma$ is the row vector $\beta \cdot \begin{bmatrix}
     \mathbf{b} \\
-    \mathbf{c}
+    \mathbf{c} \\
+    \mathbf{d}
 \end{bmatrix}$ for brevity, and
 \[
-\int_e \phi_i \, d\Omega = \frac{1}{3} \Delta^{(e)} \quad \text{as} \quad \phi^{(e)}_i + \phi^{(e)}_j + \phi^{(e)}_k = 1,
+\int_e \phi^{(e)}_i \, d\Omega = \frac{1}{4} |V^{(e)}| \quad \text{as} \quad \phi^{(e)}_i + \phi^{(e)}_j + \phi^{(e)}_k + \phi^{(e)}_m= 1,
 \]
 we have that the local convective matrix is
 \[
-B_{ij}^{(e)} = \int_e \divg (\beta \phi_j) \phi_i \, d\Omega = \frac{1}{2\Delta^{(e)}}\sigma_j \int_e \phi_i \, d\Omega = \frac{1}{2\Delta^{(e)}}\sigma_j \frac{1}{3} \Delta^{(e)} = \frac{1}{6} \sigma_j.
+B_{ij}^{(e)} = \int_e \divg (\beta \phi^{(e)}_j) \phi^{(e)}_i \, d\Omega = \frac{1}{6V^{(e)}}\sigma_j \int_e \phi^{(e)}_i \, d\Omega = \frac{1}{6V^{(e)}}\sigma_j \frac{1}{4} V^{(e)} = \frac{\text{sgn}\, V^{(e)}}{24} \sigma_j.
 \]
 In matrix form,
 \[
-B^{(e)} = \frac{1}{6} \begin{bmatrix} \sigma \\ \sigma \\ \sigma
+B^{(e)} = \frac{\text{sgn}\, V^{(e)}}{24} \begin{bmatrix} \sigma \\ \sigma \\ \sigma \\ \sigma
 \end{bmatrix},
 \]
 where the rows are equal as the coefficients are independent of the row index.
 
-\paragraph{Stabilization Matrix} The streamline upwind diffusion matrix in the element $e\in\mathcal{E}$ is given by
+\paragraph{Mass Matrix} 
+The mass matrix coefficients are
 \[
-S_{ij}^{(e)} = \tau \int_e \frac{h^{(e)}}{K^{(e)}|\beta^{(e)}|}(\beta^{(e)}\cdot \nabla \phi_i)(\beta^{(e)}\cdot \nabla \phi_j)\, d\Omega,
+P^{(e)}_{ij} = \int_\Omega\phi^{(e)}_i\phi^{(e)}_j\,d\Omega,
 \]
-where $\tau$ is an hyperparameter to tune how much numerical diffusion to add for stabililization, $h^{(e)}$ is the diameter of the element, $K^{(e)} = \|K_{|e}\|_\infty$ and $\beta^{(e)}$ is the elemental velocity vector.
-As $\beta$ and $K$ are constant by assumption and $h^{(e)}=h$, equal for any element, as the triangulation is regular, the coefficients could be computed as 
+that in matrix form is
 \[
-S_{ij}^{(e)} = \tau \frac{h}{K|\beta|}\int_e (\beta^{(e)}\cdot \nabla \phi_i)(\beta^{(e)}\cdot \nabla \phi_j)\, d\Omega = \tau \frac{h}{K|\beta|} \frac{\sigma_i}{2\Delta^{(e)}} \frac{\sigma_j}{2\Delta^{(e)}} \int_e \,d\Omega = 
-\tau \frac{h}{4\Delta^{(e)}K|\beta|}\sigma_i\sigma_j
-\] that in matrix form is 
-\[
-S^{(e)} = \tau \frac{h}{4\Delta^{(e)}K|\beta|} \sigma^T \sigma.
-\]
+P^{(e)} = \frac{|V^{(e)}|}{20}\begin{bmatrix}
+    2 & 1 & 1 & 1 \\ 1 & 2 & 1 & 1 \\ 1 & 1 & 2 & 1 \\ 1 & 1 & 1 & 2
+\end{bmatrix}.
+\]  
 
-\section{Imposing Boundary Conditions}
-Instead of imposing Dirichlet boundary condition with the penalty term method, we follow an exact standard general preocedure.
-As the basis functions are chosen to be \emph{Lagrangian}, i.e., there is a basis function $\phi_i$ for each node $N_i$ and $\phi_i(N_j)=\delta_{ij}$, for $u(x) = \sum_i u_i\phi_i(x)$ the coefficient $u_i$ directly represents the value of $u(x)$ evaluated at node $N_i$.
+\section{Matrix CSR format}
+Matrices are stored in Compressed Sparse Row (CSR) format for memory efficiency. Each matrix $N\times N$ is described by:
+\begin{itemize}
+    \item a vector of double \texttt{coef} with the non zero coefficients,
+    \item a vector of int \texttt{ja} with the same length of \texttt{coef} where each component is the column index of the corresponding non zero coefficient,
+    \item a vector of int \texttt{iat} of dimension $N+1$ where $\texttt{iat}(i)$ has the index where the coefficients of the row $i$ begin in \texttt{coef}.
+\end{itemize}
 
-Dirichlet Boundary Conditions on node $N_{\bar{i}}$ are enforced by fixing the corresponding unknown, e.g. $u_{\bar{i}}=\overline{u}$. Since then $u_{\bar{i}}$ is not an unknown anymore, the system can be simplified by replacing its corresponding row with $u_{\bar{i}}=\overline{u}$ and updating other rows by moving terms involving $u_{\bar{i}}$ to the right hand side. For instance, the $i$-th row
-\[ \sum_{j=1}^{N_h}a_{ij}u_j = f_i\]
-becomes
-\[ \sum_{j\neq \bar{i}}a_{ij}u_j = f_i - \overline{u}a_{i\bar{i}}. \]
+Using this structure, the matrix vector product $A v = b$ is computed as in the following snippet, where $N$ is the dimension of $A$.
 
-The implementation follows this approach. First, we store the columns of the matrix corresponding to the nodes with Dirichlet Boundary conditions. Then, we set to zero the corresponding rows and columns, and set to one the diagonal entries, as in the following code snippet, where in the node of index \texttt{dirnodes} we impose the value \texttt{dirval}:
-\begin{lstlisting}[style=Matlab-editor]
-    A4update = A(:,dirnodes); % store the columns for Dirichlet bc
-    nBound = length(dirnodes);
-    A(dirnodes, :) = sparse(nBound, size(H,2)); %zero out solved rows
-    A(:, dirnodes) = sparse(size(H,1), nBound); %zero out columns
-    A(dirnodes(:,1),dirnodes(:,1)) = speye(nBound); %one in the diagonal 
+\begin{lstlisting}
+    for(int i = 0; i < N; i++){
+        double sum = 0.0;
+        for(int k = iat[i]; k < iat[i+1]; k++)
+            sum += coef[k] * v[ja[k]];
+        b[i] = sum;
+    }
 \end{lstlisting}
-Finally, with the right hand side $\mathbf{f}$ and the boundary conditions \texttt{bound}, we enforce them with
-\begin{lstlisting}[style=Matlab-editor]
-    q = f - A4update * dirval; 
-    q(dirnodes) = dirval; 
-\end{lstlisting}
-and the final linear system is \[ A u = q.\]
 
-\section{Numerical Solution}
-We solve numerically the equation in study for $K = [0.001, 0.01, 0.1, 1]$. The mesh provided is a structural mesh made of isosceles rectangular triangle with $l=1/20$ and hypotenusa $h= \sqrt{2}/20$. With $\beta = \begin{bmatrix}
-    1 & 3
-\end{bmatrix}^T $ oscillations occurr starting from $K = 0.01$ when convection dominates diffusion. The ``pseudo" Peclet number for the mesh is computed as $\mathbb{P}\!e =|\beta| h / K$ and the values are summarized in Table \ref{tab:peclet}.
+\section{Parallel Assembly}
 
-\begin{table}[H]
-    \centering
-    \begin{tabular}{c|c}
-        K & $\mathbb{P}\!e$ \\
-        \hline
-        1 & 0.2236 \\
-        0.1 & 2.236 \\
-        0.01 & 22.36 \\
-        0.001 & 223.6
-    \end{tabular}
-    \caption{Pseudo Peclet number for different values of $K$ for the considered mesh and $\beta = \begin{bmatrix}
-    1 & 3
-\end{bmatrix}^T$.}\label{tab:peclet}
-\end{table}
-We can clearly notice that for $K = 1$, the Peclet number is well inside the stable region $\mathbb{P}\!e \lesssim 2$, whereas for $K = 0.1$, the Peclet number lies in a transitional or uncertain zone $2 \lesssim \mathbb{P}\!e \lesssim 3$.
-Viceversa for $K\leq 0.01$ the Peclet number is in the unstable region. 
+Given the tetrahedral discretization of the unit cube, e.g., ``Cubo\_4820.coor'' for the node coordinates and ``Cubo\_4820.tetra'' for the mesh connectivities, the topology of the sparse matrices $P$, $H$, and $B$, i.e., the vectors \texttt{iat} and \texttt{ja}, is computed using a routine in \texttt{topol.cpp}, a file already provided.
+For parallelization, we used \emph{OpenMP} directives in C, experimenting with two methods.
 
-Numerical simulation without stabililization term confirm these results. Figure \ref{fig:nostab1} and \ref{fig:nostab} show the obtained solution for different values of $K$. Oscillations are evident for $K\leq 0.01$. As $u$ represents a concentration normalized between 0 and 1, the solutions with $K\leq 0.01$ are non physical because they have oscillations with negative values and values greater than one.
+\paragraph{Methods}
+In the first method, we open a parallel region within the main loop over the elements. When adding local contributions to the global matrices, we avoid data races using the \emph{omp atomic} directive, which ensures safe access to specific memory locations.
+In the second method, we divide the nodes among threads, and each thread is responsible for assembling only the rows corresponding to the nodes assigned to it. To accomplish this, we open a parallel region before the main loop, and each thread iterates through all elements. At the beginning of each loop iteration, we check whether any node of the current element lies within the index range handled by the thread. If none do, the thread skips the element; otherwise, it proceeds with the assembly.
 
-\begin{figure}[H]\centering
-    
-    \begin{subfigure}[t]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{pic/k1t0.jpg}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[t]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{pic/k01t0.jpg}
-    \end{subfigure}
-    \caption{Numerical solution of the Convection-diffusion equation with linear Galerkin elements without stabililization for $K=1$ on the left and $K=0.1$ on the right.}\label{fig:nostab1}
-
-\end{figure}
-\begin{figure}[H]\centering
-    
-    \begin{subfigure}[t]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{pic/k001t0.jpg}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[t]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{pic/k0001t0.jpg}
-    \end{subfigure}
-
-    \caption{Numerical solution of the Convection-diffusion equation with linear Galerkin elements without stabililization for $K=0.01$ on the left and $K=0.001$ on the right.}
-    \label{fig:nostab}
-\end{figure}
-
-\section{Stabilized Solution}
-For $K=0.01$ and $K=0.001$ we have to find the smallest amount of numerical stabililization diffusion to stabilize the solution of the stabilized linear system \[
-(H + B + S)u = 0 \quad \text{s.t. $u$ satisfies BC.}
-\] For $K=0.001$ we choose $\tau = 0.005$ and $\tau = 0.01$ for $K=0.01$. Figure \ref{fig:stab} has the stabilized solution for the corresponding value of $K$.
+\paragraph{RCM Ordering}
+The RCM Ordering minimize the maximum distance from the diagonal of the connectivity matrix as we can see in Figure \ref{fig:rcm}. This ordering well suited for the second method, so that most of the elements have all the nodes dealt by the same thread and very few are shared between threads avoid repeating the computation of local matrices different times.
 
 \begin{figure}[H]
-     \begin{subfigure}[t]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{pic/k001t001.jpg}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[t]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{pic/k0001t0005.jpg}
-    \end{subfigure}
-    \caption{Stabilized solution for $K=0.01$ and $K=0.001$.}\label{fig:stab}
+    \centering
+    \begin{subfigure}{.45\textwidth}
+        \includegraphics[width = \textwidth]{pic/topol4820_native.jpg}
+    \end{subfigure} \hfill
+    \begin{subfigure}{.45\textwidth}
+        \includegraphics[width = \textwidth]{pic/topol4820_rcm.jpg}
+    \end{subfigure} 
+    \caption{Comparison between the Sparsity Pattern of the Native Order, in the left, and RCM Order, in the right, for Cubo\_4820.}\label{fig:rcm}
 \end{figure}
 
-\section{Mass Balance}
-One can check mass balance to certify the goodness of the numerical solution. Indeed, integrating on $\Omega$ Equation (\ref{eq:strong}), one gets 
-\[
--K \int_{\Omega}\divg \nabla u \,d\Omega + \int_{\Omega}\divg(\beta u)\,d\Omega = 0,
-\]
-that by Green's Lemma is 
-\[
-0 = - K \int_{\partial\Omega} \nabla u \cdot n \,d\Sigma + \int_{\partial\Omega} u \beta\cdot n \,d\Sigma =: Q_D + Q_C,
-\]
-where $n$ is the outer normal to $\partial\Omega$ and $d\Sigma$ is the Hausdorff measure on the boundary and we have denoted $Q_D$ and $Q_C$ the diffusive and convective flux respectively.
-The convective flux can be computed exactly because the Drichlet boundary conditions fix the value of the solution at the boundary:
-\begin{align*}
-Q_C &= \int_{\partial\Omega} u \beta\cdot n \,d\Sigma = \int_{\Gamma_1} 1 \cdot (\beta\cdot n) \,d\Sigma + \int_{\Gamma_2} 0 \cdot (\beta\cdot n) \,d\Sigma \\
-&= \int_{x=0, y \in [0,1]} (1,3) \cdot (-1,0) \,d\Sigma + \int_{y=0, x \in [0,0.3]} (1,3) \cdot (0,-1) \,d\Sigma = -1 - 3 \cdot 0.3 = -1.9.
-\end{align*}
-On the other hand, one can compute, denoting $\psi = \sum_{i\in \partial\Omega}\phi_i$,
-\begin{align*}
-    \sum_{i \in \partial\Omega} (Hu)_i &= \sum_{i\in \partial\Omega} \sum_{j=1}^{n_\text{nodes}} \left(\int_\Omega K \nabla \phi_i \cdot \nabla \phi_j\, d\Omega\right)u_j =  K \int_\Omega \nabla\left(\sum_{i\in \partial\Omega}\phi_i\right) \cdot \nabla \left(\sum_{j=1}^{n_\text{nodes}}u_j\phi_j\right)\, d\Omega \\
-    &= \int_\Omega \nabla \psi \cdot \nabla u_h \, d\Omega \overset{(\star)}{\cong} - K \int_\Omega \psi \Delta u_h \, d\Omega + \int_{\partial \Omega} \psi \nabla u_h \cdot n \, d\Sigma = 0 +  K \int_{\partial\Omega} \nabla u \cdot n \,d\Sigma = -Q_D,
-\end{align*}
-because $\Delta u_h = \sum_j u_j \Delta \phi_j = 0$ almost everywhere as the basis functions are linear and $\psi_{| \partial \Omega} = 1$. On $(\star)$ the equality is up to net flux on edges with a single point on the boundary. 
-
-\paragraph{Numerical results}
-The balance of fluxes in the numerical solutions are not satisfied, as one can read in Table \ref{tab:diffflux}. However, we cannot check if the difference between convective and diffusive flux decreases for finer meshes as we are provided only with one.
-It is relevant to notice that when stabililization numerical diffusion is added, the diffusion flux decreases as the numerical diffusion flux is predominant.
+\paragraph{Wallclock Time}
+In Tables \ref{tab:first} and \ref{tab:second} are recorded the wallclock time for the assembly using different mesh size and method. 
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|cccc|cccc|}
+        \hline 
+        mesh     & \multicolumn{4}{c|}{Native Orders}            & \multicolumn{4}{c|}{RCM Orders}   \\ \hline
+        np       & 1 & 2 & 3 & 4                                 & 1 & 2 & 3 & 4                     \\ \hline
+        591      & 0.003498 & 0.002196 & 0.001492 & 0.001343     & 0.002204 & 0.001836 & 0.001522 & 0.001348  \\
+        4820     & 0.029394 & 0.016465 & 0.017465 & 0.016776     & 0.033074 & 0.026714 & 0.017348 & 0.016971  \\
+        35199    & 0.139041 & 0.084434 & 0.078921 & 0.074565     & 0.146572 & 0.104031 & 0.083276 & 0.073265  \\
+        246389   & 1.083549 & 0.660812 & 0.622493 & 0.454520     & 1.087817 & 0.578902 & 0.527128 & 0.463474  \\
+        1772481  & 8.674350 & 5.024438 & 4.384249 & 3.763095     & 8.235272 & 5.036050 & 4.239713 & 3.669412  \\ \hline
+    \end{tabular}
+    \caption{Wallclock time per mesh per number of processors using the first method.}\label{tab:first}
+\end{table}
 
 \begin{table}[H]
     \centering
-    \begin{tabular}{c|c|c|c|c|c|c}
-  $K$ & 1 & 0.1 & \multicolumn{2}{c|}{0.01} & \multicolumn{2}{c}{0.001} \\
-  \hline
-  $\tau$    & 0& 0 & 0 & 0.01 & 0 & 0.005 \\
-  \hline
-  $Q_D$  & 1.619 & 1.085 & 0.2286 & 0.05621 & 0.01191 & -0.001449 \\
-\end{tabular}
-\caption{Diffusive Flux for different values of $K$ and $\tau$. Convective flux is constant $Q_C=-1.9$.}\label{tab:diffflux}
+
+    \begin{tabular}{|l|cccc|cccc|}
+        \hline
+        mesh     & \multicolumn{4}{c|}{Native Orders}           & \multicolumn{4}{c|}{RCM Orders}   \\ \hline
+        np       & 1 & 2 & 3 & 4                                & 1        & 2        & 3        & 4                     \\ \hline
+        591      & 0.001416 & 0.001367 & 0.001582 & 0.001504    & 0.001735 & 0.001542 & 0.001306 & 0.001068              \\
+        4820     & 0.016920 & 0.008194 & 0.013895 & 0.010358    & 0.016194 & 0.008159 & 0.011808 & 0.012608              \\
+        35199    & 0.107847 & 0.070413 & 0.066152 & 0.063732    & 0.102554 & 0.065730 & 0.053469 & 0.058253              \\
+        246389   & 0.726559 & 0.432734 & 0.404094 & 0.380202    & 0.777682 & 0.423994 & 0.374354 & 0.335085              \\
+        1772481  & 5.563172 & 3.334491 & 3.119737 & 2.856767    & 5.565595 & 3.227776 & 2.997635 & 2.711643              \\ \hline
+    \end{tabular}
+    \caption{Wallclock time per mesh per number of processors using the second method.}\label{tab:second}
+\end{table}
+
+\section{GMRES}
+
+The Generalized Minimal Residual method (GMRES) is an iterative Krylov subspace method used to solve nonsymmetric and possibly indefinite systems of linear equations of the form
+\[
+Ax = b,
+\]
+where \( A \in \mathbb{R}^{n \times n} \) is a general (not necessarily symmetric) matrix, and \( b \in \mathbb{R}^n \) is the right-hand side vector.
+
+GMRES constructs an approximate solution \( x_k \) in the Krylov subspace
+\[
+\mathcal{K}_k(A, r_0) = \text{span} \{ r_0, Ar_0, A^2r_0, \dots, A^{k-1}r_0 \},
+\]
+where \( r_0 = b - Ax_0 \) is the initial residual, such that the residual norm \( \| b - Ax_k \|_2 \) is minimized at each iteration \( k \).
+
+The method builds an orthonormal basis of \( \mathcal{K}_k(A, r_0) \) using the Arnoldi process, resulting in a Hessenberg matrix \( H_k \). The approximate solution is then computed by solving a least-squares problem involving \( H_k \).
+
+\subsection{Pseudocode of the GMRES Algorithm}
+
+Below is a simplified version of the preconditoned GMRES algorithm:
+
+\begin{algorithm}[H]
+\caption{GMRES}
+\begin{algorithmic}
+\Require $A$, $M^{-1}$, rhs $b$, $x_0$, \texttt{maxit}, \texttt{tol}
+\State \( r_0 = M^{-1}(b - Ax_0) \)
+\State \( \beta = \|r_0\|_2 \), \( v_1 = r_0 / \beta \)
+\For{$j = 1, 2, \dots, \texttt{maxit}$}
+    \State Compute \( w = M^{-1}(Av_j) \)
+    \For{$i = 1, \dots, j$}
+        \State \( h_{i,j} = w^T v_i \)
+        \State \( w = w - h_{i,j} v_i \)
+    \EndFor
+    \State \( h_{j+1,j} = \|w\|_2 \)
+    \If{\( h_{j+1,j} = 0 \)} \Comment{happy breakdown}
+        \State break
+    \EndIf
+    \State \( v_{j+1} = w / h_{j+1,j} \)
+    \State Solve least squares problem \( \min \| \beta e_1 - H_j y \|_2 \)
+    \State \( x_j = x_0 + V_j y \)
+    \If{\( \| b - Ax_j \|_2 < \beta \cdot \texttt{tol} \)}
+        \State \Return \( x_j \)
+    \EndIf
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+To solve the least squares problem, the QR factorization of the Hessenberg matrix $H_j$ is computed. Moreover, we have that $ \| b - Ax_j \|_2 = \min \| \beta e_1 - H_j y \|_2 \ = |(Q^Te_1)_{j+1}|$ and there is no need to solve explicitely the least square problem, that can be done once for all at the end.
+
+\paragraph{Numerical Implementation of QR}
+At first, we implement the full QR with the Modified Gram Schmidt method. Later, we exploit the incremental nature of the problem to update the QR factorization through Givens rotations. It allows to be more efficient both in memory and in computing resources.
+
+At the step $j$ the QR factorization of the \((j+1) \times j\) upper Hessenberg matrix \( \widetilde{H}_j \) is
+\[
+\widetilde{Q}^T_j \widetilde{H}_j = \widetilde{R}_j,
+\]
+where \( \widetilde{Q}^T_j \in \mathbb{R}^{(j+1) \times (j+1)} \) is orthogonal and \( \widetilde{R}_j \in \mathbb{R}^{(j+1) \times j} \) is upper triangular. Because \( \widetilde{R}_j \) has one more row than columns, it can be written as
+\[
+\widetilde{R}_j = 
+\begin{bmatrix}
+R_j \\
+0
+\end{bmatrix},
+\]
+where \( R_j \in \mathbb{R}^{j \times j} \) is upper triangular.
+At the next step, as the Hessenberg matrix is augmented only by one row and one column:
+\[
+\widetilde{H}_{j+1} = 
+\begin{bmatrix}
+\widetilde{H}_j & h_{j+1} \\
+0 & h_{j+2,j+1}
+\end{bmatrix},
+\]
+where \( h_{j+1} \in \mathbb{R}^{j+1} \) is the new column, to update the QR decomposition, we first extend \( Q^T_j \) by embedding it into a \((j+2) \times (j+2)\) identity matrix:
+\[
+\begin{bmatrix}
+Q^T_j & 0 \\
+0 & 1
+\end{bmatrix} \widetilde{H}_{j+1} =
+\begin{bmatrix}
+R_j & r_{j+1} \\
+0 & \rho \\
+0 & \sigma
+\end{bmatrix}.
+\]
+This matrix is almost upper triangular, except for the entry \( \sigma \). To eliminate \( \sigma \), we apply a Givens rotation
+\[
+G_j = 
+\begin{bmatrix}
+I_j & 0 & 0 \\
+0 & c_j & s_j \\
+0 & -s_j & c_j
+\end{bmatrix},
+\]
+where the cosine and sine coefficients are defined as
+\[
+c_j = \frac{\rho}{\sqrt{\rho^2 + \sigma^2}}, \qquad
+s_j = \frac{\sigma}{\sqrt{\rho^2 + \sigma^2}}.
+\]
+The new orthogonal matrix becomes
+\[
+Q^T_{j+1} = G_j 
+\begin{bmatrix}
+Q^T_j & 0 \\
+0 & 1
+\end{bmatrix},
+\]
+and the updated Hessenberg factorization satisfies
+\[
+Q^T_{j+1} \widetilde{H}_{j+1} =
+\begin{bmatrix}
+R_j & r_{j+1} \\
+0 & r_{j+1,j+1} \\
+0 & 0
+\end{bmatrix},
+\quad \text{with} \quad
+r_{j+1,j+1} = \sqrt{\rho^2 + \sigma^2}.
+\]
+In addition, the new residual vector $\widetilde{Q}^T_{j+1}e_1$ is easily updated as well to be
+\[
+s_\text{new} = G_j s_\text{prev},
+\]
+from the previous residual vector $s_\text{prev}$.
+
+\section{Numerical Solution}
+We set $K_1 = 0.4$, $K_2 = 0.1$, $K_3 = 0.1$ and $\beta = [1 1 2]$, so that we should see more diffusion in the $x$ direction and convection in $z$ direction. The result for the topology \emph{Cubo\_246389} is represented in Figure \ref{fig:numericalsol}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width= 0.6\textwidth]{pic/sol246389.eps}
+    \caption{Numerical Solution for \emph{Cubo\_246389}.}\label{fig:numericalsol} 
+\end{figure}
+
+\paragraph{Times}
+We record in Table \ref{tab:gmrestime} the wallclock time for different runs of the gmres algorithm with different mesh resolution, with full qr or update qr with givens rotations and with different number of threads.
+
+\begin{table}[H]
+    \centering
+
+    \begin{tabular}{|l|cccc|cccc|}
+        \hline
+        mesh     & \multicolumn{4}{c|}{Full QR}           & \multicolumn{4}{c|}{Givens Rotations}   \\ \hline
+        np       & 1 & 2 & 3 & 4                                & 1        & 2        & 3        & 4                     \\ \hline
+        591      & 0.018584 & 0.026168 & 0.021910 & 0.038606    & 0.016536 & 0.022566 & 0.020040 & 0.012172              \\
+        4820     & 0.245137 & 0.219408 & 0.253363 & 0.365317    & 0.176397 & 0.157603 & 0.155172 & 0.114681              \\
+        35199    & 6.691650 & 5.263159 & 5.521273 & 5.481706    & 3.850077 & 3.133227 & 2.558239 & 2.028428             \\
+        246389   & 192.774403 & 172.514156 & 166.784374 & 165.938683    & 141.900566  & 118.400026 & 109.071518 & 108.034066             \\ \hline
+        % 1772481  &  &  &  &     &  &  &  &               \\ \hline
+    \end{tabular}
+    \caption{GMRES Wallclock time per mesh per number of processors.}\label{tab:gmrestime}
 \end{table}
 
 \end{document}

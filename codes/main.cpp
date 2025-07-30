@@ -8,7 +8,7 @@ using namespace std;
 #include <chrono>
 
 #include "topol.h"
-#include "gmres_parallel.h"
+#include "gmres.h"
 
 double det3(double* r0,double* r1,double* r2 ){
    return r0[0]*(r1[1]*r2[2]-r2[1]*r1[2]) 
@@ -53,14 +53,6 @@ int main(int argc, const char* argv[]){
    for (int i = 0; i < ntet; i++)
       for (int j = 0; j < 4; j++) tetra[i][j]--;
    
-   // // save tet again (?)
-   // FILE *of = fopen("out_tet","w");
-   // for (int i = 0; i < ntet; i++){
-   //    for (int j = 0; j < 4; j++) fprintf(of," %10d",tetra[i][j]+1);
-   //    fprintf(of,"\n");
-   // }
-   // fclose(of);
-
    // Find the number of equations
    int nn = 0;
    for (int i = 0; i < ntet; i++)
@@ -293,7 +285,7 @@ int main(int argc, const char* argv[]){
    double* bdval = (double*) malloc(nnodes*sizeof(double));
    for (int i=0;i<nnodes;i++){
       // bdval[i]=0.;
-      if ((coord[i][0]< 1e-10)&&(coord[i][1]< 1e-10)&&(coord[i][2]< 1e-10)){
+      if ((coord[i][0]< 1e-10)&&(coord[i][1]< 1e-10)&&(coord[i][2]< .3 + 1e-10)){
          bdval[i]=1.;
       }
       else {
@@ -383,9 +375,9 @@ int main(int argc, const char* argv[]){
 
    FILE *f;
 
-   // Export iat
+   // Export sol
    f = fopen("sol.txt", "w");
-   for (int i = 0; i <= nn; ++i)
+   for (int i = 0; i < nn; ++i)
       fprintf(f, "%f\n", sol[i]);
    fclose(f);
    

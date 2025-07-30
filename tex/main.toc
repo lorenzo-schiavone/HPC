@@ -1,10 +1,15 @@
-\contentsline {section}{\numberline {1}Problem Statement and Strong Formulation}{1}{section.1}%
+\contentsline {section}{\numberline {1}Problem Statement and Strong Formulation}{2}{section.1}%
 \contentsline {section}{\numberline {2}Weak Galerkin Formulation}{2}{section.2}%
-\contentsline {section}{\numberline {3}Finite Elements and Assembly}{2}{section.3}%
+\contentsline {section}{\numberline {3}Finite Elements Matrices}{3}{section.3}%
 \contentsline {paragraph}{Convective Matrix}{3}{section*.7}%
-\contentsline {paragraph}{Stabilization Matrix}{3}{section*.8}%
-\contentsline {section}{\numberline {4}Imposing Boundary Conditions}{4}{section.4}%
-\contentsline {section}{\numberline {5}Numerical Solution}{4}{section.5}%
-\contentsline {section}{\numberline {6}Stabilized Solution}{5}{section.6}%
-\contentsline {section}{\numberline {7}Mass Balance}{6}{section.7}%
-\contentsline {paragraph}{Numerical results}{6}{section*.13}%
+\contentsline {paragraph}{Mass Matrix}{4}{section*.8}%
+\contentsline {section}{\numberline {4}Matrix CSR format}{4}{section.4}%
+\contentsline {section}{\numberline {5}Parallel Assembly}{4}{section.5}%
+\contentsline {paragraph}{Methods}{5}{section*.9}%
+\contentsline {paragraph}{RCM Ordering}{5}{section*.10}%
+\contentsline {paragraph}{Wallclock Time}{5}{section*.12}%
+\contentsline {section}{\numberline {6}GMRES}{6}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Pseudocode of the GMRES Algorithm}{6}{subsection.6.1}%
+\contentsline {paragraph}{Numerical Implementation of QR}{6}{section*.15}%
+\contentsline {section}{\numberline {7}Numerical Solution}{7}{section.7}%
+\contentsline {paragraph}{Times}{8}{section*.17}%

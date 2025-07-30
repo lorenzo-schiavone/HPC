@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.2.11)  29 JUL 2025 09:39
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.2.11)  30 JUL 2025 11:14
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -684,7 +684,7 @@ Package: array 2023/10/16 v2.5g Tabular extension package (FMi)
 \extratabsurround=\skip70
 \backup@length=\skip71
 \ar@cellbox=\box117
-)) (/usr/local/texlive/2024/texmf-dist/tex/latex/booktabs/booktabs.sty
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/booktabs/booktabs.sty
 Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \heavyrulewidth=\dimen305
 \lightrulewidth=\dimen306
@@ -703,7 +703,11 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \@thisruleclass=\count355
 \@lastruleclass=\count356
 \@thisrulewidth=\dimen317
-) (/usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2024/02/21 1.10 listings language file
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2024/02/21 1.10 (Carsten Heinz)
+)) (/usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-02-20 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count357
 \l__pdf_internal_box=\box118
@@ -812,65 +816,79 @@ File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 pdfTeX warning (ext4): destination with the same identifier (name{equation.2.1}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.108 \end{bmatrix} \]
-                       is constant and the local diffusion stiffness matrix is
+l.94 \]
+       
 pdfTeX warning (ext4): destination with the same identifier (name{equation.2.1}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.108 \end{bmatrix} \]
-                       is constant and the local diffusion stiffness matrix is] [3]
-<pic/k1t0.jpg, id=84, 562.1pt x 421.575pt>
-File: pic/k1t0.jpg Graphic file (type jpg)
-<use pic/k1t0.jpg>
-Package pdftex.def Info: pic/k1t0.jpg  used on input line 204.
+l.94 \]
+       ]
+Overfull \hbox (21.77116pt too wide) detected at line 108
+[]
+ []
+
+
+Overfull \hbox (4.66328pt too wide) in paragraph at lines 114--116
+\OT1/cmr/m/n/10 Compactly, if we col-lect $\OT1/cmr/bx/n/10 b \OT1/cmr/m/n/10 = []$ and, like-wise $\OT1/cmr/bx/n/10 c \OT1/cmr/m/n/10 = []$ and $\OT1/cmr/bx/n/10 d \OT1/cmr/m/n/10 = []$,
+ []
+
+[3]
+LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <9> not available
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 168.
+ [4{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}]
+<pic/topol4820_native.jpg, id=101, 562.1pt x 421.575pt>
+File: pic/topol4820_native.jpg Graphic file (type jpg)
+<use pic/topol4820_native.jpg>
+Package pdftex.def Info: pic/topol4820_native.jpg  used on input line 191.
 (pdftex.def)             Requested size: 211.38832pt x 158.54051pt.
-<pic/k01t0.jpg, id=85, 562.1pt x 421.575pt>
-File: pic/k01t0.jpg Graphic file (type jpg)
-<use pic/k01t0.jpg>
-Package pdftex.def Info: pic/k01t0.jpg  used on input line 209.
+<pic/topol4820_rcm.jpg, id=102, 562.1pt x 421.575pt>
+File: pic/topol4820_rcm.jpg Graphic file (type jpg)
+<use pic/topol4820_rcm.jpg>
+Package pdftex.def Info: pic/topol4820_rcm.jpg  used on input line 194.
 (pdftex.def)             Requested size: 211.38832pt x 158.54051pt.
- [4]
-<pic/k001t0.jpg, id=106, 562.1pt x 421.575pt>
-File: pic/k001t0.jpg Graphic file (type jpg)
-<use pic/k001t0.jpg>
-Package pdftex.def Info: pic/k001t0.jpg  used on input line 218.
-(pdftex.def)             Requested size: 211.38832pt x 158.54051pt.
-<pic/k0001t0.jpg, id=107, 562.1pt x 421.575pt>
-File: pic/k0001t0.jpg Graphic file (type jpg)
-<use pic/k0001t0.jpg>
-Package pdftex.def Info: pic/k0001t0.jpg  used on input line 223.
-(pdftex.def)             Requested size: 211.38832pt x 158.54051pt.
-<pic/k001t001.jpg, id=109, 562.1pt x 421.575pt>
-File: pic/k001t001.jpg Graphic file (type jpg)
-<use pic/k001t001.jpg>
-Package pdftex.def Info: pic/k001t001.jpg  used on input line 238.
-(pdftex.def)             Requested size: 211.38832pt x 158.54051pt.
-<pic/k0001t0005.jpg, id=110, 562.1pt x 421.575pt>
-File: pic/k0001t0005.jpg Graphic file (type jpg)
-<use pic/k0001t0005.jpg>
-Package pdftex.def Info: pic/k0001t0005.jpg  used on input line 243.
-(pdftex.def)             Requested size: 211.38832pt x 158.54051pt.
- [5 <./pic/k1t0.jpg> <./pic/k01t0.jpg> <./pic/k001t0.jpg> <./pic/k0001t0.jpg>] [6 <./pic/k001t001.jpg> <./pic/k0001t0005.jpg>] [7] (./main.aux)
+ [5 <./pic/topol4820_native.jpg> <./pic/topol4820_rcm.jpg>]
+Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 253.
+ [6]
+Package epstopdf Info: Source file: <pic/sol246389.eps>
+(epstopdf)                    date: 2025-07-30 10:39:16
+(epstopdf)                    size: 321454 bytes
+(epstopdf)             Output file: <pic/sol246389-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-07-30 10:39:35
+(epstopdf)                    size: 106678 bytes
+(epstopdf)             Command: <repstopdf --outfile=pic/sol246389-eps-converted-to.pdf pic/sol246389.eps>
+(epstopdf)             \includegraphics on input line 360.
+Package epstopdf Info: Output file is already uptodate.
+<pic/sol246389-eps-converted-to.pdf, id=123, 562.1pt x 421.575pt>
+File: pic/sol246389-eps-converted-to.pdf Graphic file (type pdf)
+<use pic/sol246389-eps-converted-to.pdf>
+Package pdftex.def Info: pic/sol246389-eps-converted-to.pdf  used on input line 360.
+(pdftex.def)             Requested size: 281.85587pt x 211.39165pt.
+ [7]
+Overfull \hbox (52.06857pt too wide) in paragraph at lines 370--380
+ [][] 
+ []
+
+[8 <./pic/sol246389-eps-converted-to.pdf>] (./main.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: C8C6B47729F4F8C1D2170220C85230AB;1193.
+(rerunfilecheck)             Checksum: 705F2C7A1A4B283084F261F92A30D8A0;1301.
  ) 
 Here is how much of TeX's memory you used:
- 27405 strings out of 474116
- 502856 string characters out of 5743682
- 2005187 words of memory out of 5000000
- 49268 multiletter control sequences out of 15000+600000
- 568083 words of font info for 78 fonts, out of 8000000 for 9000
+ 27448 strings out of 474116
+ 503664 string characters out of 5743682
+ 1973187 words of memory out of 5000000
+ 49298 multiletter control sequences out of 15000+600000
+ 568892 words of font info for 81 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 104i,17n,134p,577b,1380s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on main.pdf (7 pages, 582172 bytes).
+ 104i,13n,134p,577b,1203s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
+Output written on main.pdf (8 pages, 490515 bytes).
 PDF statistics:
- 217 PDF objects out of 1000 (max. 8388607)
- 164 compressed objects within 2 object streams
- 40 named destinations out of 1000 (max. 500000)
- 99 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 235 PDF objects out of 1000 (max. 8388607)
+ 177 compressed objects within 2 object streams
+ 45 named destinations out of 1000 (max. 500000)
+ 92 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -1,0 +1,14 @@
+clc; clear; close all;
+elements = load("Cubo_246389.tetra");
+nodes = load("Cubo_246389.coor");
+elements = elements(:,2:5);
+nodes = nodes(:,2:4);
+sol = load("sol.txt");
+trisurf(elements(:,1:4), nodes(:,1), nodes(:,2), nodes(:,3), sol, 'FaceAlpha', .5);
+colorbar; %clim([0 1]); 
+shading interp;
+view(3); axis equal;
+drawnow; 
+xlabel("x");
+ylabel("y");
+zlabel("z");
