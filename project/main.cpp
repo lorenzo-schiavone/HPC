@@ -8,7 +8,8 @@ using namespace std;
 #include <chrono>
 
 #include "topol.h"
-#include "gmres_parallel.h"
+// #include "gmres.h"
+#include "gmres_restart.h"
 
 double det3(double* r0,double* r1,double* r2 ){
    return r0[0]*(r1[1]*r2[2]-r2[1]*r1[2]) 
@@ -293,7 +294,7 @@ int main(int argc, const char* argv[]){
    double* bdval = (double*) malloc(nnodes*sizeof(double));
    for (int i=0;i<nnodes;i++){
       // bdval[i]=0.;
-      if ((coord[i][0]< 1e-10)&&(coord[i][1]< 1e-10)&&(coord[i][2]< 1e-10)){
+      if ((coord[i][0]< 1e-10)&&(coord[i][1]< 1e-10)&&(coord[i][2]< .3 + 1e-10)){
          bdval[i]=1.;
       }
       else {
@@ -367,9 +368,12 @@ int main(int argc, const char* argv[]){
    }
 
    double tol = 1e-9;
-   int maxit = 10000;
+   int maxit = 20;
+   int restart = 50;
+   // int maxit = 2000;
    
-   gmres(nnodes, iat, ja, coefAmod, rhs, tol, maxit, np, sol);
+   gmres(nnodes, iat, ja, coefAmod, rhs, tol, maxit, restart, np, sol);
+   // gmres(nnodes, iat, ja, coefAmod, rhs, tol, maxit, np, sol);
 
    endTime = std::chrono::high_resolution_clock::now();
    timeTaken = std::chrono::duration<double>(endTime - startTime);
