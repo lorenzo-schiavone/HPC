@@ -369,7 +369,7 @@ int main(int argc, const char* argv[]){
 
    double tol = 1e-9;
    int maxit = 20;
-   int restart = 50;
+   int restart = 100;
    // int maxit = 2000;
    
    gmres(nnodes, iat, ja, coefAmod, rhs, tol, maxit, restart, np, sol);
