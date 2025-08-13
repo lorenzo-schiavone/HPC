@@ -3,7 +3,6 @@
 #include <fstream>
 #include <cstdlib>
 using namespace std;
-#include <string.h>
 #include <math.h>
 #include <omp.h>
 #include <chrono>
@@ -112,14 +111,14 @@ int main(int argc, const char* argv[]){
    double end;
    start = omp_get_wtime();  
    // we have to build H, B, P csr matrix. -> so just coefH, coefB, coefP
-   double* coefH = (double*) calloc (nterm, sizeof(double));
-   double* coefB = (double*) calloc (nterm, sizeof(double));
-   double* coefP = (double*) calloc (nterm, sizeof(double));
-   // for (int i=0; i< nterm; i++){
-   //    coefH[i]=0;
-   //    coefB[i]=0;
-   //    coefP[i]=0;
-   // }
+   double* coefH = (double*) malloc (nterm * sizeof(double));
+   double* coefB = (double*) malloc (nterm * sizeof(double));
+   double* coefP = (double*) malloc (nterm * sizeof(double));
+   for (int i=0; i< nterm; i++){
+      coefH[i]=0;
+      coefB[i]=0;
+      coefP[i]=0;
+   }
 
    # pragma omp parallel num_threads(np)
    {
@@ -265,10 +264,10 @@ int main(int argc, const char* argv[]){
    }
 
    // building rhs
-   double* rhs = (double *) calloc(nnodes, sizeof(double));
-   // for (int i=0;i<nnodes;i++){
-   //    rhs[i] = 0.;
-   // }
+   double* rhs = (double *) malloc(nnodes*sizeof(double));
+   for (int i=0;i<nnodes;i++){
+      rhs[i] = 0.;
+   }
 
    matcsrvecprod(nn,iat,ja, coefP, bdval, rhs, np);
    for (int i=0;i<nnodes;i++){
@@ -281,12 +280,14 @@ int main(int argc, const char* argv[]){
    } 
 
    // vector for the solution
-   double* sol = (double *) calloc(nnodes, sizeof(double));
-   // for (int i=0;i<nnodes;i++){
-   //    sol[i] = 0.;
-   // }
+   double* sol = (double *) malloc(nnodes*sizeof(double));
+   for (int i=0;i<nnodes;i++){
+      sol[i] = 0.;
+   }
 
    double tol = 1e-9;
+
+   
    gmres(nnodes, iat, ja, coefAmod, rhs, tol, maxit, restart, np, sol);
    end = omp_get_wtime();
    printf("gmres time taken %f\n", end - start);
@@ -297,8 +298,9 @@ int main(int argc, const char* argv[]){
    }
    printf("\n");
 
-   // Export sol
    FILE *f;
+
+   // Export sol
    f = fopen("sol.txt", "w");
    for (int i = 0; i <= nn; ++i)
       fprintf(f, "%f\n", sol[i]);

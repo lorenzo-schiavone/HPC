@@ -12,7 +12,7 @@
 
 \pagebreak
 
-\section{Problem Statement and Strong Formulation}
+\section{Problem Statement}
 Consider the Transient Convection-Diffusion Equation 
 
 \begin{equation}\tag{$D$}\label{eq:strong}
@@ -58,7 +58,7 @@ for $\Omega = [0,1] \times [0,1]\times [0,1]$, $\Gamma = \{0\} \times \{0\} \tim
 \caption{Domain of study.}
 \end{figure}
 
-\section{Weak Galerkin Formulation}
+\subsection{Weak Galerkin Formulation}
 The Weak Formulation of (\ref{eq:strong}) is: find $u \in H^1(\Omega)$ such that boundary conditions hold and 
 
 \begin{equation}\tag{$W$}\label{eq:weak}
@@ -86,7 +86,7 @@ or
 that in matrix form reads \[ P\mathbf{u}' + H\mathbf{u} + B\mathbf{u} = 0\] where $\mathbf{u} = (u_1, \dots, u_{n_\text{nodes}})^T$, and the mass matrix $P$, the diffusion stiffness matrix $H$ and the non-symmetric convective matrix $B$ have components, respectively,
 \[P_{ij} = \int_\Omega \phi_j \phi_i\, d\Omega ,\quad\quad H_{ij} = \int_\Omega K \nabla \phi_j \cdot \nabla \phi_i\, d\Omega \quad \text{and} \quad B_{ij} = \int_\Omega  \divg( \beta \phi_j) \phi_i\,d\Omega.\]
 
-\section{Finite Elements Matrices}
+\subsection{Finite Elements Matrices}
 
 Inside each tetrahedral element $e\in\mathcal{E}$ with vertices $\mathbf{x}_i, \mathbf{x}_j, \mathbf{x}_k, \mathbf{x}_m$ only the corresponding basis function $\phi_i,\phi_j,\phi_k,\phi_m$ are non zero. Their local expression is 
 \[
@@ -196,38 +196,76 @@ The RCM Ordering minimize the maximum distance from the diagonal of the connecti
     \caption{Comparison between the Sparsity Pattern of the Native Order, in the left, and RCM Order, in the right, for Cubo\_4820.}\label{fig:rcm}
 \end{figure}
 
-\paragraph{Wallclock Time}
-In Tables \ref{tab:first} and \ref{tab:second} are recorded the wallclock time for the assembly using different mesh size and method. 
+\subsection{Parallelisation Improvements}
+\paragraph{Time}
+For the mesh with 1772481 nodes (Cube\_1772481) we record in Table \ref{tab:assemblytimes} the total wallclock time for the assembly using the two different methods and orders.
+% In Tables \ref{tab:first} and \ref{tab:second} are recorded the wallclock time for the assembly using different mesh size and method. 
+
 \begin{table}[H]
     \centering
-    \begin{tabular}{|l|cccc|cccc|}
+    \begin{tabular}{| c | c c | c c | }
         \hline 
-        mesh     & \multicolumn{4}{c|}{Native Orders}            & \multicolumn{4}{c|}{RCM Orders}   \\ \hline
-        np       & 1 & 2 & 3 & 4                                 & 1 & 2 & 3 & 4                     \\ \hline
-        591      & 0.003498 & 0.002196 & 0.001492 & 0.001343     & 0.002204 & 0.001836 & 0.001522 & 0.001348  \\
-        4820     & 0.029394 & 0.016465 & 0.017465 & 0.016776     & 0.033074 & 0.026714 & 0.017348 & 0.016971  \\
-        35199    & 0.139041 & 0.084434 & 0.078921 & 0.074565     & 0.146572 & 0.104031 & 0.083276 & 0.073265  \\
-        246389   & 1.083549 & 0.660812 & 0.622493 & 0.454520     & 1.087817 & 0.578902 & 0.527128 & 0.463474  \\
-        1772481  & 8.674350 & 5.024438 & 4.384249 & 3.763095     & 8.235272 & 5.036050 & 4.239713 & 3.669412  \\ \hline
+        np & \multicolumn{2}{c|}{Native Order} & \multicolumn{2}{c|}{RCM Order} \\ \hline
+        method & 1 & 2 		& 1 & 2 		\\ \hline
+        1 & 8.219900 & 5.204082 & 8.249664 & 5.618524   \\ 
+        2 & 4.630122 & 3.205535 & 4.689079 & 3.162474   \\
+        3 & 4.060645 & 2.878401 & 4.205213 & 2.737441   \\
+        4 & 3.634686 & 2.751820 & 3.705338 & 2.398958   \\ \hline
+
     \end{tabular}
-    \caption{Wallclock time per mesh per number of processors using the first method.}\label{tab:first}
+    \caption{Wallclock time for the assembly of Cube\_1772481 per number of threads using the different methods.}\label{tab:assemblytimes}
 \end{table}
+
+\paragraph{Speedup} We compute the speedup as $S_p = T_1 / T_p$ and obtain the following values.
 
 \begin{table}[H]
     \centering
+    \begin{tabular}{| c c  | c c | c c | }
+        \hline 
+        np & \multicolumn{2}{c|}{Native Order} & \multicolumn{2}{c|}{RCM Order} \\ \hline
+        & method & 1 & 2 		& 1 & 2 		\\ \hline
+        1 && 8.219900 & 5.204082 & 8.249664 & 5.618524   \\ 
+        2 && 4.630122 & 3.205535 & 4.689079 & 3.162474   \\
+        3 && 4.060645 & 2.878401 & 4.205213 & 2.737441   \\
+        4 && 3.634686 & 2.751820 & 3.705338 & 2.398958   \\ \hline
 
-    \begin{tabular}{|l|cccc|cccc|}
-        \hline
-        mesh     & \multicolumn{4}{c|}{Native Orders}           & \multicolumn{4}{c|}{RCM Orders}   \\ \hline
-        np       & 1 & 2 & 3 & 4                                & 1        & 2        & 3        & 4                     \\ \hline
-        591      & 0.001416 & 0.001367 & 0.001582 & 0.001504    & 0.001735 & 0.001542 & 0.001306 & 0.001068              \\
-        4820     & 0.016920 & 0.008194 & 0.013895 & 0.010358    & 0.016194 & 0.008159 & 0.011808 & 0.012608              \\
-        35199    & 0.107847 & 0.070413 & 0.066152 & 0.063732    & 0.102554 & 0.065730 & 0.053469 & 0.058253              \\
-        246389   & 0.726559 & 0.432734 & 0.404094 & 0.380202    & 0.777682 & 0.423994 & 0.374354 & 0.335085              \\
-        1772481  & 5.563172 & 3.334491 & 3.119737 & 2.856767    & 5.565595 & 3.227776 & 2.997635 & 2.711643              \\ \hline
     \end{tabular}
-    \caption{Wallclock time per mesh per number of processors using the second method.}\label{tab:second}
+    \caption{Speedup for the assembly of Cube\_1772481 per number of threads using the different methods.}\label{tab:assemblyspeedups}
 \end{table}
+
+% \begin{table}[H]
+%     \centering
+%     \begin{tabular}{|l|cccc|cccc|}
+%         \hline 
+%         mesh     & \multicolumn{4}{c|}{Native Orders}            & \multicolumn{4}{c|}{RCM Orders}   \\ \hline
+%         np       & 1 & 2 & 3 & 4                                 & 1 & 2 & 3 & 4                     \\ \hline
+%         591      & 0.003498 & 0.002196 & 0.001492 & 0.001343     & 0.002204 & 0.001836 & 0.001522 & 0.001348  \\
+%         4820     & 0.029394 & 0.016465 & 0.017465 & 0.016776     & 0.033074 & 0.026714 & 0.017348 & 0.016971  \\
+%         35199    & 0.139041 & 0.084434 & 0.078921 & 0.074565     & 0.146572 & 0.104031 & 0.083276 & 0.073265  \\
+%         246389   & 1.083549 & 0.660812 & 0.622493 & 0.454520     & 1.087817 & 0.578902 & 0.527128 & 0.463474  \\
+%         1772481  & 8.674350 & 5.024438 & 4.384249 & 3.763095     & 8.235272 & 5.036050 & 4.239713 & 3.669412  \\ \hline
+%     \end{tabular}
+%     \caption{Wallclock time per mesh per number of processors using the first method.}\label{tab:first}
+% \end{table}
+
+% \begin{table}[H]
+%     \centering
+
+%     \begin{tabular}{|l|cccc|cccc|}
+%         \hline
+%         mesh     & \multicolumn{4}{c|}{Native Orders}           & \multicolumn{4}{c|}{RCM Orders}   \\ \hline
+%         np       & 1 & 2 & 3 & 4                                & 1        & 2        & 3        & 4                     \\ \hline
+%         591      & 0.001416 & 0.001367 & 0.001582 & 0.001504    & 0.001735 & 0.001542 & 0.001306 & 0.001068              \\
+%         4820     & 0.016920 & 0.008194 & 0.013895 & 0.010358    & 0.016194 & 0.008159 & 0.011808 & 0.012608              \\
+%         35199    & 0.107847 & 0.070413 & 0.066152 & 0.063732    & 0.102554 & 0.065730 & 0.053469 & 0.058253              \\
+%         246389   & 0.726559 & 0.432734 & 0.404094 & 0.380202    & 0.777682 & 0.423994 & 0.374354 & 0.335085              \\
+%         1772481  & 5.563172 & 3.334491 & 3.119737 & 2.856767    & 5.565595 & 3.227776 & 2.997635 & 2.711643              \\ \hline
+%     \end{tabular}
+%     \caption{Wallclock time per mesh per number of processors using the second method.}\label{tab:second}
+% \end{table}
+
+We can notice that the second method generally reduces the wallclock time by completely avoiding the atomic clause. 
+For showing the improvements obtained with the parallelization, we only consider the larger instances, i.e., 246389 and 1772481, as for smaller the parallelization cannot be fully exploited and the overheads are counterproductive.
 
 \section{GMRES}
 
@@ -352,8 +390,14 @@ s_\text{new} = G_j s_\text{prev},
 \]
 from the previous residual vector $s_\text{prev}$.
 
-\section{Numerical Solution}
-We set $K_1 = 0.4$, $K_2 = 0.1$, $K_3 = 0.1$ and $\beta = [1 1 2]$, so that we should see more diffusion in the $x$ direction and convection in $z$ direction. The result for the topology \emph{Cubo\_246389} is represented in Figure \ref{fig:numericalsol}.
+\subsection{GMRES with Restarts}
+
+One of the most computationally expensive aspects of the GMRES algorithm is the computation of scalar products involving large vectors. As the number of iterations increases, the cost of orthonormalizing the new vector $Av_n$ also grows, due to the expanding Krylov subspace.
+
+A common strategy to mitigate this cost is to restart the algorithm after a fixed number of iterations. Specifically, once the Krylov basis reaches a predetermined maximum size, the algorithm is restarted using the current approximate solution as the new initial guess. This restart mechanism limits the size of the Krylov subspace and, consequently, the cost of orthonormalization and QR factorization. As a result, optimizing the QR decomposition becomes less critical, since the matrices involved remain relatively small—especially when compared to the size the Krylov basis would otherwise reach.
+
+\section{Numerical Solution and SpeedUp}
+We set $K_1 = 0.4$, $K_2 = 0.1$, $K_3 = 0.1$ and $\beta = \begin{bmatrix} 1 &1& 2 \end{bmatrix}$, so that we should see more diffusion in the $x$ direction and convection in $z$ direction. The result for the topology \emph{Cubo\_246389} is represented in Figure \ref{fig:numericalsol}.
 
 \begin{figure}[H]
     \centering
@@ -361,23 +405,48 @@ We set $K_1 = 0.4$, $K_2 = 0.1$, $K_3 = 0.1$ and $\beta = [1 1 2]$, so that we s
     \caption{Numerical Solution for \emph{Cubo\_246389}.}\label{fig:numericalsol} 
 \end{figure}
 
-\paragraph{Times}
-We record in Table \ref{tab:gmrestime} the wallclock time for different runs of the gmres algorithm with different mesh resolution, with full qr or update qr with givens rotations and with different number of threads.
+\paragraph{SpeedUp}
+We record the wallclock time for different runs of the gmres algorithm with different mesh resolution, with full QR or update QR with Givens rotations and with different number of threads.
+
+Table \ref{tab:gmrestime} has the times for the GMRES algorithm without restart. As for finer mesh the problem gets worse conditioned, it requires more number of iterations and the computation of scalars product to orthogonormalize the new vector slow down and the Hessenberg matrix gets large enough to see a difference in performance between fullQR and updateQR with Givens rotations. For instance, for this particular equation, 692 iterations are needed for Cubo\_246389, 327 for Cubo\_35199 and 152 for Cubo\_2480.
 
 \begin{table}[H]
     \centering
-
+    \scalebox{0.85}{
     \begin{tabular}{|l|cccc|cccc|}
         \hline
-        mesh     & \multicolumn{4}{c|}{Full QR}           & \multicolumn{4}{c|}{Givens Rotations}   \\ \hline
-        np       & 1 & 2 & 3 & 4                                & 1        & 2        & 3        & 4                     \\ \hline
-        591      & 0.018584 & 0.026168 & 0.021910 & 0.038606    & 0.016536 & 0.022566 & 0.020040 & 0.012172              \\
-        4820     & 0.245137 & 0.219408 & 0.253363 & 0.365317    & 0.176397 & 0.157603 & 0.155172 & 0.114681              \\
-        35199    & 6.691650 & 5.263159 & 5.521273 & 5.481706    & 3.850077 & 3.133227 & 2.558239 & 2.028428             \\
-        246389   & 192.774403 & 172.514156 & 166.784374 & 165.938683    & 141.900566  & 118.400026 & 109.071518 & 108.034066             \\ \hline
+        mesh     & \multicolumn{4}{c|}{Full QR}                         & \multicolumn{4}{c|}{Givens Rotations}                  \\ \hline
+        np       & 1 & 2 & 3 & 4                                        & 1           & 2          & 3          & 4              \\ \hline
+        591      & 0.018584 & 0.026168 & 0.021910 & 0.038606            & 0.016536    & 0.022566   & 0.020040   & 0.012172       \\
+        4820     & 0.245137 & 0.219408 & 0.253363 & 0.365317            & 0.176397    & 0.157603   & 0.155172   & 0.114681       \\
+        35199    & 6.691650 & 5.263159 & 5.521273 & 5.481706            & 3.850077    & 3.133227   & 2.558239   & 2.028428       \\
+        246389   & 192.774403 & 172.514156 & 166.784374 & 165.938683    & 141.900566  & 118.400026 & 109.071518 & 108.034066     \\ \hline
         % 1772481  &  &  &  &     &  &  &  &               \\ \hline
     \end{tabular}
-    \caption{GMRES Wallclock time per mesh per number of processors.}\label{tab:gmrestime}
+    }
+    \caption{GMRES without Restart Wallclock Time per mesh per number of processors.}\label{tab:gmrestime}
 \end{table}
+
+
+With $\texttt{restart}=20$ the runtime reduced as expected and the gap between fullQR and updateQR is reduced up to nothing as we can see in Table \ref{tab:restartgmrestime}.
+\begin{table}[H]
+    \centering
+    \scalebox{0.9}{
+    \begin{tabular}{|l|cccc|cccc|}
+        \hline
+        mesh     & \multicolumn{4}{c|}{Full QR}                     & \multicolumn{4}{c|}{Givens Rotations}              \\ \hline
+        np       & 1 & 2 & 3 & 4                                    & 1          & 2         & 3         & 4             \\ \hline
+        591      & 0.005044 & 0.006249 & 0.007026 & 0.008006        & 0.004282   & 0.005619  & 0.005794  & 0.008158      \\
+        4820     & 0.074955 & 0.051164 & 0.054156 & 0.060948        & 0.072978   & 0.051687  & 0.072261  & 0.056536      \\
+        35199    & 1.481658 & 0.911852 & 0.893830 & 0.796473        & 1.370873   & 0.994098  & 0.917565  & 0.788522      \\
+        246389   & 28.826296 & 22.153475 & 21.679111 & 19.995768    & 30.915334  & 19.829192 & 19.641860 & 18.240454     \\ \hline
+        % 1772481  &  &  &  &     &  &  &  &               \\ \hline
+    \end{tabular}
+    }
+    \caption{GMRES with $\texttt{restart}=20$ Wallclock Time per mesh per number of processors.}\label{tab:restartgmrestime}
+\end{table}
+
+
+\todo{FAI PLOT CON I VALORI DI QUESTE TABELLE E CALCOLA SPEEDUP}
 
 \end{document}

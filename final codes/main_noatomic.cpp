@@ -9,7 +9,6 @@ using namespace std;
 #include <chrono>
 
 #include "topol.h"
-// #include "gmres.h"
 #include "gmres_restart.h"
 
 double det3(double* r0,double* r1,double* r2 ){
@@ -121,8 +120,16 @@ int main(int argc, const char* argv[]){
    //    coefP[i]=0;
    // }
 
+   int bsize = nnodes / np;
    # pragma omp parallel num_threads(np)
    {
+      int myid = omp_get_thread_num();
+      int istart = myid*bsize;
+      int iend = (myid +1)*bsize; 
+      if (myid == np-1){
+         iend = nnodes;
+      }
+
       double* a = (double*) malloc(4*sizeof(double));
       double* b = (double*) malloc(4*sizeof(double));
       double* c = (double*) malloc(4*sizeof(double));
@@ -140,13 +147,24 @@ int main(int argc, const char* argv[]){
          Bloc[i] = &(Bloc_buf[kk]);
          kk+=4;
       }
-      # pragma omp for 
       for (int jj=0;jj<ntet;jj++){
          int* tet = tetra[jj];
          double* n0=coord[tet[0]];
          double* n1=coord[tet[1]];
          double* n2=coord[tet[2]];
-         double* n3=coord[tet[3]];       
+         double* n3=coord[tet[3]];  
+         
+         // true false if a node has to be assembled by the current thread 
+         bool test[4];
+         bool is_it_ok = false;
+         for (int i=0;i<4;i++){
+            test[i] = (tet[i]<iend)&&(tet[i]>=istart);
+            if (test[i]) is_it_ok=true;
+         }
+         if (!(is_it_ok)) {
+            continue; // no node in the range
+         }
+
          double vol = (det3(n1,n2,n3)-
                      det3(n0,n2,n3)+
                      det3(n0,n1,n3)-
@@ -171,6 +189,7 @@ int main(int argc, const char* argv[]){
             d[ii] = segno * (nk[1]*nm[0]-nm[1]*nk[0] - (nj[1]*nm[0]-nj[0]*nm[1])+nj[1]*nk[0]-nj[0]*nk[1]); // I swap col 1 with col 2 so the det change sign
          }
 
+
          for (int i=0;i<4; i++){
             double* Hi = Hloc[i];
             double* Pi = Ploc[i];
@@ -189,23 +208,23 @@ int main(int argc, const char* argv[]){
 
          for (int i=0;i<4; i++){
             // tet[i] gives the row index
-            double* Hi = Hloc[i];
-            double* Pi = Ploc[i];
-            double* Bi = Bloc[i];
-            for (int j=0;j<4;j++){
-               // in ja from iat[tet[i]] look for tet[j]
-               int curr_node = tet[i];
-               for (int ii=iat[curr_node]; ii<iat[curr_node+1]; ii++){
-                  int jjj = tet[j];
-                  if (ja[ii] == jjj){
-                     #pragma omp atomic
-                     coefH[ii] += Hi[j];
-                     #pragma omp atomic
-                     coefP[ii] += Pi[j];
-                     #pragma omp atomic
-                     coefB[ii] += Bi[j];
-                  }
-               }
+            int curr_node = tet[i];
+            if (test[i]){
+
+                double* Hi = Hloc[i];
+                double* Pi = Ploc[i];
+                double* Bi = Bloc[i];
+                for (int j=0;j<4;j++){
+                // in ja from iat[tet[i]] look for tet[j]
+                    for (int ii=iat[curr_node]; ii<iat[curr_node+1]; ii++){
+                        int jjj = tet[j];
+                        if (ja[ii] == jjj){
+                            coefH[ii] += Hi[j];
+                            coefP[ii] += Pi[j];
+                            coefB[ii] += Bi[j];
+                        }
+                    }
+                }
             }
          }  
       }
@@ -224,10 +243,9 @@ int main(int argc, const char* argv[]){
       coefAmod[i] = coefA[i]; 
    }
 
-
    double* bdval = (double*) malloc(nnodes*sizeof(double));
    for (int i=0;i<nnodes;i++){
-      // bdval[i]=0.;
+      bdval[i]=0.;
       if ((coord[i][0]< 1e-10)&&(coord[i][1]< 1e-10)&&(coord[i][2]< .3 + 1e-10)){
          bdval[i]=1.;
       }
@@ -235,11 +253,11 @@ int main(int argc, const char* argv[]){
          bdval[i]=0.;
       }
    }
-
-   double* Abdval = (double *) malloc(nnodes*sizeof(double));
-   for (int i=0;i<nnodes;i++){
-      Abdval[i] = 0.;
-   }
+  
+   double* Abdval = (double *) calloc(nnodes, sizeof(double));
+   // for (int i=0;i<nnodes;i++){
+   //    Abdval[i] = 0.;
+   // }
    matcsrvecprod(nn,iat,ja,coefA, bdval, Abdval, np); // xx is the boundary adjust
 
 
@@ -280,14 +298,16 @@ int main(int argc, const char* argv[]){
       }
    } 
 
+
    // vector for the solution
-   double* sol = (double *) calloc(nnodes, sizeof(double));
+   double* sol = (double *) calloc(nnodes,sizeof(double));
    // for (int i=0;i<nnodes;i++){
    //    sol[i] = 0.;
    // }
 
    double tol = 1e-9;
    gmres(nnodes, iat, ja, coefAmod, rhs, tol, maxit, restart, np, sol);
+
    end = omp_get_wtime();
    printf("gmres time taken %f\n", end - start);
 
@@ -300,11 +320,11 @@ int main(int argc, const char* argv[]){
    // Export sol
    FILE *f;
    f = fopen("sol.txt", "w");
-   for (int i = 0; i <= nn; ++i)
+   for (int i = 0; i < nn; ++i)
       fprintf(f, "%f\n", sol[i]);
    fclose(f);
    
-   // free memory
+   // Free memory
    free(coord);
    free(coord_buff);
    free(tetra);
@@ -314,11 +334,5 @@ int main(int argc, const char* argv[]){
    free(coefH);
    free(coefP);
    free(coefB);
-   free(coefA);
-   free(coefAmod);
-   free(bdval);
-   free(Abdval);
-   free(sol);
-   free(rhs);
 
 }

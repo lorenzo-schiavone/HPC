@@ -1,13 +1,13 @@
 clc; close all; clear;
-elements = load("Cubo_4820_rcm.tetra");
-nodes = load("Cubo_4820_rcm.coor");
+elements = load("Cubo_35199.tetra");
+nodes = load("Cubo_35199.coor");
 
 % % to have positive volumes
 % el_temp = elements(:,:);
 % elements(:,1) = el_temp(:,2);
 % elements(:,2) = el_temp(:,1);
 
-% elements = elements(:,2:end-1);
+elements = elements(:,2:end-1);
 % nodes = nodes(:, 2:end);
 
 D = 1e-1 * [4,1,1];
@@ -15,8 +15,8 @@ v = [1,1,2];
 dt = 1;
 nsteps = 1;
 tol = 1e-9;
-maxit = 1;
-repeat = 2000;
+maxit = 20;
+repeat = 100;
 
 
 tot_el = size(elements,1);
@@ -164,8 +164,9 @@ for step = 1:nsteps
     rhs(bc_nodes) = bc_val;                 
     
     % Solve linear system
-    
+    tic
     u = gmres(A_mod, rhs, repeat , tol, maxit, M1);
+    toc
     u_prev = u;  % Update for next time step
     
     % VISUALIZATION
@@ -180,8 +181,8 @@ for step = 1:nsteps
     zlabel("z");
     pause(0.1); 
 end
-disp("first 20 entries of the solution:")
-disp(u(1:20))
+% disp("first 20 entries of the solution:")
+% disp(u(1:20))
 
 
 
