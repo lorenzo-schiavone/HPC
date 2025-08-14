@@ -114,11 +114,6 @@ int main(int argc, const char* argv[]){
    double* coefH = (double*) calloc (nterm, sizeof(double));
    double* coefB = (double*) calloc (nterm, sizeof(double));
    double* coefP = (double*) calloc (nterm, sizeof(double));
-   // for (int i=0; i< nterm; i++){
-   //    coefH[i]=0;
-   //    coefB[i]=0;
-   //    coefP[i]=0;
-   // }
 
    int bsize = nnodes / np;
    # pragma omp parallel num_threads(np)
@@ -203,8 +198,6 @@ int main(int argc, const char* argv[]){
          }
          
          // put them inside coefH, coefP, coefB
-         // omp atomic or whatever here like assembly only row for nodes deputed to the process
-         // maybe later instead of first building the local matrix and then put it inside coef, put it directly there
 
          for (int i=0;i<4; i++){
             // tet[i] gives the row index
@@ -255,10 +248,8 @@ int main(int argc, const char* argv[]){
    }
   
    double* Abdval = (double *) calloc(nnodes, sizeof(double));
-   // for (int i=0;i<nnodes;i++){
-   //    Abdval[i] = 0.;
-   // }
-   matcsrvecprod(nn,iat,ja,coefA, bdval, Abdval, np); // xx is the boundary adjust
+
+   matcsrvecprod(nn,iat,ja,coefA, bdval, Abdval, np);
 
 
    // boundary impose
@@ -284,9 +275,7 @@ int main(int argc, const char* argv[]){
 
    // building rhs
    double* rhs = (double *) calloc(nnodes, sizeof(double));
-   // for (int i=0;i<nnodes;i++){
-   //    rhs[i] = 0.;
-   // }
+
 
    matcsrvecprod(nn,iat,ja, coefP, bdval, rhs, np);
    for (int i=0;i<nnodes;i++){
@@ -301,9 +290,6 @@ int main(int argc, const char* argv[]){
 
    // vector for the solution
    double* sol = (double *) calloc(nnodes,sizeof(double));
-   // for (int i=0;i<nnodes;i++){
-   //    sol[i] = 0.;
-   // }
 
    double tol = 1e-9;
    gmres(nnodes, iat, ja, coefAmod, rhs, tol, maxit, restart, np, sol);

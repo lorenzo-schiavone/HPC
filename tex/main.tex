@@ -85,6 +85,10 @@ or
 
 that in matrix form reads \[ P\mathbf{u}' + H\mathbf{u} + B\mathbf{u} = 0\] where $\mathbf{u} = (u_1, \dots, u_{n_\text{nodes}})^T$, and the mass matrix $P$, the diffusion stiffness matrix $H$ and the non-symmetric convective matrix $B$ have components, respectively,
 \[P_{ij} = \int_\Omega \phi_j \phi_i\, d\Omega ,\quad\quad H_{ij} = \int_\Omega K \nabla \phi_j \cdot \nabla \phi_i\, d\Omega \quad \text{and} \quad B_{ij} = \int_\Omega  \divg( \beta \phi_j) \phi_i\,d\Omega.\]
+The derivative $\mathbf{u}'$ is approximated using implicit Euler scheme i.e., \[
+\mathbf{u}' \approx \frac{\mathbf{u} - \mathbf{u}^\text{old}}{\Delta t}
+\] with a discrete time $\Delta t$ so that the final linar system is 
+\[ \frac{P}{\Delta t }\mathbf{u} + H\mathbf{u} + B\mathbf{u} = \frac{P}{\Delta t } \mathbf{u}^\text{old}.\]
 
 \subsection{Finite Elements Matrices}
 
@@ -100,12 +104,17 @@ V^{(e)} = \frac{1}{6}\det \left(\begin{bmatrix}
 \]
 and the coefficients $\mathbf{a}, \mathbf{b}, \mathbf{c}, \mathbf{d}$ are computed so that $\phi_l(\mathbf{x_r}) = \delta_{lr}$, i.e., 
 
+\scalebox{0.9}{%
+    \parbox{\linewidth}{%
 \begin{align*}
 a_i &= \det \begin{bmatrix} x_j & y_j & z_j \\ x_k & y_k & z_k \\ x_m & y_m & z_m \end{bmatrix}& b_i &= - \det \begin{bmatrix} 1 & y_j & z_j \\ 1 & y_k & z_k \\ 1 & y_m & z_m \end{bmatrix} & & & a_j &= - \det \begin{bmatrix} x_i & y_i & z_i \\ x_k & y_k & z_k \\ x_m & y_m & z_m \end{bmatrix}& b_j &= \det \begin{bmatrix} 1 & y_i & z_i \\ 1 & y_k & z_k \\ 1 & y_m & z_m \end{bmatrix}\\
 c_i &= \det \begin{bmatrix} 1 & x_j & z_j \\ 1 & x_k & z_k \\ 1 & x_m & z_m \end{bmatrix} & d_i &= - \det \begin{bmatrix} 1 & x_j & y_j \\ 1 & x_k & y_k \\ 1 & x_m & y_m \end{bmatrix}      & & & c_j &= - \det \begin{bmatrix} 1 & x_i & z_i \\ 1 & x_k & z_k \\ 1 & x_m & z_m \end{bmatrix}& d_j &= \det \begin{bmatrix} 1 & x_i & y_i \\ 1 & x_k & y_k \\ 1 & x_m & y_m \end{bmatrix}\\ \\
 a_k &= \det \begin{bmatrix} x_i & y_i & z_i \\ x_j & y_j & z_j \\ x_m & y_m & z_m \end{bmatrix}& b_k &= - \det \begin{bmatrix} 1 & y_i & z_i \\ 1 & y_j & z_j \\ 1 & y_m & z_m\end{bmatrix}& & & a_m &= - \det \begin{bmatrix} x_i & y_i & z_i \\ x_j & y_j & z_j \\ x_k & y_k & z_k \end{bmatrix}& b_m &= \det \begin{bmatrix} 1 & y_i & z_i \\ 1 & y_j & z_j \\ 1 & y_k & z_k\end{bmatrix} \\
 c_k &= \det \begin{bmatrix} 1 & x_i & z_i \\ 1 & x_j & z_j \\ 1 & x_m & z_m \end{bmatrix}& d_k &= - \det \begin{bmatrix} 1 & x_i & y_i \\ 1 & x_j & y_j \\ 1 & x_m & y_m \end{bmatrix}     & & & c_m &= - \det \begin{bmatrix} 1 & x_i & z_i \\ 1 & x_j & z_j \\ 1 & x_k & z_k \end{bmatrix}& d_m &=\det \begin{bmatrix} 1 & x_i & y_i \\ 1 & x_j & y_j \\ 1 & x_k & y_k \end{bmatrix}\\
 \end{align*}
+}
+}
+
 Then, \[\nabla \phi_i^{(e)} = \frac{1}{6V^{(e)}}\begin{bmatrix}
     b_i \\ c_i \\ d_i
 \end{bmatrix} \] is constant and the local diffusion stiffness matrix is 
@@ -145,7 +154,10 @@ where the rows are equal as the coefficients are independent of the row index.
 \paragraph{Mass Matrix} 
 The mass matrix coefficients are
 \[
-P^{(e)}_{ij} = \int_\Omega\phi^{(e)}_i\phi^{(e)}_j\,d\Omega,
+P^{(e)}_{ij} = \int_\Omega\phi^{(e)}_i\phi^{(e)}_j\,d\Omega = \begin{cases}
+    |V^{(e)}|/10 & \text{if } i = j \\
+    |V^{(e)}|/20 & \text{if } i \neq j
+\end{cases}
 \]
 that in matrix form is
 \[
@@ -162,7 +174,7 @@ Matrices are stored in Compressed Sparse Row (CSR) format for memory efficiency.
     \item a vector of int \texttt{iat} of dimension $N+1$ where $\texttt{iat}(i)$ has the index where the coefficients of the row $i$ begin in \texttt{coef}.
 \end{itemize}
 
-Using this structure, the matrix vector product $A v = b$ is computed as in the following snippet, where $N$ is the dimension of $A$.
+Using this structure, the matrix vector product $A v = b$ is computed as in the following snippet.
 
 \begin{lstlisting}
     for(int i = 0; i < N; i++){
@@ -176,14 +188,16 @@ Using this structure, the matrix vector product $A v = b$ is computed as in the 
 \section{Parallel Assembly}
 
 Given the tetrahedral discretization of the unit cube, e.g., ``Cubo\_4820.coor'' for the node coordinates and ``Cubo\_4820.tetra'' for the mesh connectivities, the topology of the sparse matrices $P$, $H$, and $B$, i.e., the vectors \texttt{iat} and \texttt{ja}, is computed using a routine in \texttt{topol.cpp}, a file already provided.
-For parallelization, we used \emph{OpenMP} directives in C, experimenting with two methods.
+For parallelization, we used OpenMP directives in C, experimenting with two methods.
 
 \paragraph{Methods}
+
 In the first method, we open a parallel region within the main loop over the elements. When adding local contributions to the global matrices, we avoid data races using the \emph{omp atomic} directive, which ensures safe access to specific memory locations.
-In the second method, we divide the nodes among threads, and each thread is responsible for assembling only the rows corresponding to the nodes assigned to it. To accomplish this, we open a parallel region before the main loop, and each thread iterates through all elements. At the beginning of each loop iteration, we check whether any node of the current element lies within the index range handled by the thread. If none do, the thread skips the element; otherwise, it proceeds with the assembly.
+
+In the second method, we divide the nodes among threads, and each thread is responsible for assembling only the rows corresponding to the nodes assigned to it. To accomplish this, we open a parallel region before the main loop, and each thread iterates through all elements. At the beginning of each loop iteration, we check whether any node of the current element lies within the index range handled by the thread. If none do, the thread skips the element; otherwise, it proceeds with the assembly. This method is preferable because the \emph{omp atomic} clause may become a bottleneck on high thread counts.
 
 \paragraph{RCM Ordering}
-The RCM Ordering minimize the maximum distance from the diagonal of the connectivity matrix as we can see in Figure \ref{fig:rcm}. This ordering well suited for the second method, so that most of the elements have all the nodes dealt by the same thread and very few are shared between threads avoid repeating the computation of local matrices different times.
+The RCM Ordering minimize the maximum distance from the diagonal of the connectivity matrix as we can see in Figure \ref{fig:rcm}. This ordering is cache efficient and well suited for the second method, so that most of the elements have all the nodes dealt by the same thread and very few are shared between threads avoid repeating the computation of local matrices different times.
 
 \begin{figure}[H]
     \centering
@@ -196,77 +210,6 @@ The RCM Ordering minimize the maximum distance from the diagonal of the connecti
     \caption{Comparison between the Sparsity Pattern of the Native Order, in the left, and RCM Order, in the right, for Cubo\_4820.}\label{fig:rcm}
 \end{figure}
 
-\subsection{Parallelisation Improvements}
-\paragraph{Time}
-For the mesh with 1772481 nodes (Cube\_1772481) we record in Table \ref{tab:assemblytimes} the total wallclock time for the assembly using the two different methods and orders.
-% In Tables \ref{tab:first} and \ref{tab:second} are recorded the wallclock time for the assembly using different mesh size and method. 
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{| c | c c | c c | }
-        \hline 
-        np & \multicolumn{2}{c|}{Native Order} & \multicolumn{2}{c|}{RCM Order} \\ \hline
-        method & 1 & 2 		& 1 & 2 		\\ \hline
-        1 & 8.219900 & 5.204082 & 8.249664 & 5.618524   \\ 
-        2 & 4.630122 & 3.205535 & 4.689079 & 3.162474   \\
-        3 & 4.060645 & 2.878401 & 4.205213 & 2.737441   \\
-        4 & 3.634686 & 2.751820 & 3.705338 & 2.398958   \\ \hline
-
-    \end{tabular}
-    \caption{Wallclock time for the assembly of Cube\_1772481 per number of threads using the different methods.}\label{tab:assemblytimes}
-\end{table}
-
-\paragraph{Speedup} We compute the speedup as $S_p = T_1 / T_p$ and obtain the following values.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{| c c  | c c | c c | }
-        \hline 
-        np & \multicolumn{2}{c|}{Native Order} & \multicolumn{2}{c|}{RCM Order} \\ \hline
-        & method & 1 & 2 		& 1 & 2 		\\ \hline
-        1 && 8.219900 & 5.204082 & 8.249664 & 5.618524   \\ 
-        2 && 4.630122 & 3.205535 & 4.689079 & 3.162474   \\
-        3 && 4.060645 & 2.878401 & 4.205213 & 2.737441   \\
-        4 && 3.634686 & 2.751820 & 3.705338 & 2.398958   \\ \hline
-
-    \end{tabular}
-    \caption{Speedup for the assembly of Cube\_1772481 per number of threads using the different methods.}\label{tab:assemblyspeedups}
-\end{table}
-
-% \begin{table}[H]
-%     \centering
-%     \begin{tabular}{|l|cccc|cccc|}
-%         \hline 
-%         mesh     & \multicolumn{4}{c|}{Native Orders}            & \multicolumn{4}{c|}{RCM Orders}   \\ \hline
-%         np       & 1 & 2 & 3 & 4                                 & 1 & 2 & 3 & 4                     \\ \hline
-%         591      & 0.003498 & 0.002196 & 0.001492 & 0.001343     & 0.002204 & 0.001836 & 0.001522 & 0.001348  \\
-%         4820     & 0.029394 & 0.016465 & 0.017465 & 0.016776     & 0.033074 & 0.026714 & 0.017348 & 0.016971  \\
-%         35199    & 0.139041 & 0.084434 & 0.078921 & 0.074565     & 0.146572 & 0.104031 & 0.083276 & 0.073265  \\
-%         246389   & 1.083549 & 0.660812 & 0.622493 & 0.454520     & 1.087817 & 0.578902 & 0.527128 & 0.463474  \\
-%         1772481  & 8.674350 & 5.024438 & 4.384249 & 3.763095     & 8.235272 & 5.036050 & 4.239713 & 3.669412  \\ \hline
-%     \end{tabular}
-%     \caption{Wallclock time per mesh per number of processors using the first method.}\label{tab:first}
-% \end{table}
-
-% \begin{table}[H]
-%     \centering
-
-%     \begin{tabular}{|l|cccc|cccc|}
-%         \hline
-%         mesh     & \multicolumn{4}{c|}{Native Orders}           & \multicolumn{4}{c|}{RCM Orders}   \\ \hline
-%         np       & 1 & 2 & 3 & 4                                & 1        & 2        & 3        & 4                     \\ \hline
-%         591      & 0.001416 & 0.001367 & 0.001582 & 0.001504    & 0.001735 & 0.001542 & 0.001306 & 0.001068              \\
-%         4820     & 0.016920 & 0.008194 & 0.013895 & 0.010358    & 0.016194 & 0.008159 & 0.011808 & 0.012608              \\
-%         35199    & 0.107847 & 0.070413 & 0.066152 & 0.063732    & 0.102554 & 0.065730 & 0.053469 & 0.058253              \\
-%         246389   & 0.726559 & 0.432734 & 0.404094 & 0.380202    & 0.777682 & 0.423994 & 0.374354 & 0.335085              \\
-%         1772481  & 5.563172 & 3.334491 & 3.119737 & 2.856767    & 5.565595 & 3.227776 & 2.997635 & 2.711643              \\ \hline
-%     \end{tabular}
-%     \caption{Wallclock time per mesh per number of processors using the second method.}\label{tab:second}
-% \end{table}
-
-We can notice that the second method generally reduces the wallclock time by completely avoiding the atomic clause. 
-For showing the improvements obtained with the parallelization, we only consider the larger instances, i.e., 246389 and 1772481, as for smaller the parallelization cannot be fully exploited and the overheads are counterproductive.
-
 \section{GMRES}
 
 The Generalized Minimal Residual method (GMRES) is an iterative Krylov subspace method used to solve nonsymmetric and possibly indefinite systems of linear equations of the form
@@ -275,50 +218,50 @@ Ax = b,
 \]
 where \( A \in \mathbb{R}^{n \times n} \) is a general (not necessarily symmetric) matrix, and \( b \in \mathbb{R}^n \) is the right-hand side vector.
 
-GMRES constructs an approximate solution \( x_k \) in the Krylov subspace
+\noindent GMRES constructs an approximate solution \( x_k \) in the Krylov subspace
 \[
 \mathcal{K}_k(A, r_0) = \text{span} \{ r_0, Ar_0, A^2r_0, \dots, A^{k-1}r_0 \},
 \]
 where \( r_0 = b - Ax_0 \) is the initial residual, such that the residual norm \( \| b - Ax_k \|_2 \) is minimized at each iteration \( k \).
 
-The method builds an orthonormal basis of \( \mathcal{K}_k(A, r_0) \) using the Arnoldi process, resulting in a Hessenberg matrix \( H_k \). The approximate solution is then computed by solving a least-squares problem involving \( H_k \).
+\noindent The method builds an orthonormal basis of \( \mathcal{K}_k(A, r_0) \) using the Arnoldi process, resulting in a Hessenberg matrix \( H_k \). The approximate solution is then computed by solving a least-squares problem involving \( H_k \).
 
-\subsection{Pseudocode of the GMRES Algorithm}
+% \subsection{Pseudocode of the GMRES Algorithm}
 
-Below is a simplified version of the preconditoned GMRES algorithm:
+% Below is a simplified version of the preconditoned GMRES algorithm:
 
-\begin{algorithm}[H]
-\caption{GMRES}
-\begin{algorithmic}
-\Require $A$, $M^{-1}$, rhs $b$, $x_0$, \texttt{maxit}, \texttt{tol}
-\State \( r_0 = M^{-1}(b - Ax_0) \)
-\State \( \beta = \|r_0\|_2 \), \( v_1 = r_0 / \beta \)
-\For{$j = 1, 2, \dots, \texttt{maxit}$}
-    \State Compute \( w = M^{-1}(Av_j) \)
-    \For{$i = 1, \dots, j$}
-        \State \( h_{i,j} = w^T v_i \)
-        \State \( w = w - h_{i,j} v_i \)
-    \EndFor
-    \State \( h_{j+1,j} = \|w\|_2 \)
-    \If{\( h_{j+1,j} = 0 \)} \Comment{happy breakdown}
-        \State break
-    \EndIf
-    \State \( v_{j+1} = w / h_{j+1,j} \)
-    \State Solve least squares problem \( \min \| \beta e_1 - H_j y \|_2 \)
-    \State \( x_j = x_0 + V_j y \)
-    \If{\( \| b - Ax_j \|_2 < \beta \cdot \texttt{tol} \)}
-        \State \Return \( x_j \)
-    \EndIf
-\EndFor
-\end{algorithmic}
-\end{algorithm}
+% \begin{algorithm}[H]
+% \caption{GMRES}
+% \begin{algorithmic}
+% \Require $A$, $M^{-1}$, rhs $b$, $x_0$, \texttt{maxit}, \texttt{tol}
+% \State \( r_0 = M^{-1}(b - Ax_0) \)
+% \State \( \beta = \|r_0\|_2 \), \( v_1 = r_0 / \beta \)
+% \For{$j = 1, 2, \dots, \texttt{maxit}$}
+%     \State Compute \( w = M^{-1}(Av_j) \)
+%     \For{$i = 1, \dots, j$}
+%         \State \( h_{i,j} = w^T v_i \)
+%         \State \( w = w - h_{i,j} v_i \)
+%     \EndFor
+%     \State \( h_{j+1,j} = \|w\|_2 \)
+%     \If{\( h_{j+1,j} = 0 \)} \Comment{happy breakdown}
+%         \State break
+%     \EndIf
+%     \State \( v_{j+1} = w / h_{j+1,j} \)
+%     \State Solve least squares problem \( \min \| \beta e_1 - H_j y \|_2 \)
+%     \State \( x_j = x_0 + V_j y \)
+%     \If{\( \| b - Ax_j \|_2 < \beta \cdot \texttt{tol} \)}
+%         \State \Return \( x_j \)
+%     \EndIf
+% \EndFor
+% \end{algorithmic}
+% \end{algorithm}
 
-To solve the least squares problem, the QR factorization of the Hessenberg matrix $H_j$ is computed. Moreover, we have that $ \| b - Ax_j \|_2 = \min \| \beta e_1 - H_j y \|_2 \ = |(Q^Te_1)_{j+1}|$ and there is no need to solve explicitely the least square problem, that can be done once for all at the end.
+\noindent To solve the least squares problem, the QR factorization of the Hessenberg matrix $H_j$ is computed. Moreover, we have that $ \| b - Ax_j \|_2 = \min \| \beta e_1 - H_j y \|_2 \ = |(Q^Te_1)_{j+1}|$ and there is no need to solve explicitely the least square problem, that can be done once for all at the end.
 
 \paragraph{Numerical Implementation of QR}
 At first, we implement the full QR with the Modified Gram Schmidt method. Later, we exploit the incremental nature of the problem to update the QR factorization through Givens rotations. It allows to be more efficient both in memory and in computing resources.
 
-At the step $j$ the QR factorization of the \((j+1) \times j\) upper Hessenberg matrix \( \widetilde{H}_j \) is
+\noindent At the step $j$ the QR factorization of the \((j+1) \times j\) upper Hessenberg matrix \( \widetilde{H}_j \) is
 \[
 \widetilde{Q}^T_j \widetilde{H}_j = \widetilde{R}_j,
 \]
@@ -390,14 +333,13 @@ s_\text{new} = G_j s_\text{prev},
 \]
 from the previous residual vector $s_\text{prev}$.
 
-\subsection{GMRES with Restarts}
+\subsection{Parallelization and Restarts}
 
-One of the most computationally expensive aspects of the GMRES algorithm is the computation of scalar products involving large vectors. As the number of iterations increases, the cost of orthonormalizing the new vector $Av_n$ also grows, due to the expanding Krylov subspace.
+We employ parallel regions for the most computationally expensive operations in the GMRES algorithm, i.e. the matrix vector products and the computation of scalar products involving large vectors. As the number of iterations increases, the cost of orthonormalizing the new vector $Av_n$ also grows, due to the expanding Krylov subspace.
+A common strategy to mitigate this cost is to restart the algorithm after a fixed number of iterations. Specifically, once the Krylov basis reaches a predetermined maximum size, the algorithm is restarted using the current approximate solution as the new initial guess. This restart mechanism limits the size of the Krylov subspace and, consequently, the cost of orthonormalization and QR factorization. As a result, optimizing the QR decomposition becomes less critical, since the matrices involved remain relatively small.
 
-A common strategy to mitigate this cost is to restart the algorithm after a fixed number of iterations. Specifically, once the Krylov basis reaches a predetermined maximum size, the algorithm is restarted using the current approximate solution as the new initial guess. This restart mechanism limits the size of the Krylov subspace and, consequently, the cost of orthonormalization and QR factorization. As a result, optimizing the QR decomposition becomes less critical, since the matrices involved remain relatively small—especially when compared to the size the Krylov basis would otherwise reach.
-
-\section{Numerical Solution and SpeedUp}
-We set $K_1 = 0.4$, $K_2 = 0.1$, $K_3 = 0.1$ and $\beta = \begin{bmatrix} 1 &1& 2 \end{bmatrix}$, so that we should see more diffusion in the $x$ direction and convection in $z$ direction. The result for the topology \emph{Cubo\_246389} is represented in Figure \ref{fig:numericalsol}.
+\subsection{Numerical Solution}
+We set $K_1 = 0.4$, $K_2 = 0.1$, $K_3 = 0.1$ and $\beta = \begin{bmatrix} 1 &1& 2 \end{bmatrix}$, so that we should see more diffusion in the $x$ direction and convection in $z$ direction. For the GMRES we use the Jacobi preconditioner as it is well suited for parallel implementation. Figure \ref{fig:numericalsol} displays the numerical solution for the topology \emph{Cubo\_246389}.
 
 \begin{figure}[H]
     \centering
@@ -405,48 +347,139 @@ We set $K_1 = 0.4$, $K_2 = 0.1$, $K_3 = 0.1$ and $\beta = \begin{bmatrix} 1 &1& 
     \caption{Numerical Solution for \emph{Cubo\_246389}.}\label{fig:numericalsol} 
 \end{figure}
 
-\paragraph{SpeedUp}
-We record the wallclock time for different runs of the gmres algorithm with different mesh resolution, with full QR or update QR with Givens rotations and with different number of threads.
-
-Table \ref{tab:gmrestime} has the times for the GMRES algorithm without restart. As for finer mesh the problem gets worse conditioned, it requires more number of iterations and the computation of scalars product to orthogonormalize the new vector slow down and the Hessenberg matrix gets large enough to see a difference in performance between fullQR and updateQR with Givens rotations. For instance, for this particular equation, 692 iterations are needed for Cubo\_246389, 327 for Cubo\_35199 and 152 for Cubo\_2480.
+\section{Parallelization improvements}
+The experiment is performed on a MacBook Air 2017 with a 1.8 GHz Intel Core i5 dual-core (max 4 threads). As it is a domestic and not a computing specific device the speedups and parallelization improvements are modest and limited.
+We record the wall-clock time using the \texttt{omp\_get\_wtime} function in OpenMP. The Speedup is computed with $S_p = T_1/T_p$ and the Efficiency as $E_p = S_p/p$.
+\subsection{Assembly}
+For the mesh Cube\_1772481 we record the total wall-clock time for the assembly using the two different methods and orders in Table \ref{tab:assemblytimes} and speedup and efficiency in Table \ref{tab:assemblyspeedups}.
+We can notice that the second method reduces the wall-clock time by completely avoiding the atomic clause. This improvement is evident for both the Native and RCM orderings, the latter yielding the best performance overall.
 
 \begin{table}[H]
     \centering
-    \scalebox{0.85}{
-    \begin{tabular}{|l|cccc|cccc|}
-        \hline
-        mesh     & \multicolumn{4}{c|}{Full QR}                         & \multicolumn{4}{c|}{Givens Rotations}                  \\ \hline
-        np       & 1 & 2 & 3 & 4                                        & 1           & 2          & 3          & 4              \\ \hline
-        591      & 0.018584 & 0.026168 & 0.021910 & 0.038606            & 0.016536    & 0.022566   & 0.020040   & 0.012172       \\
-        4820     & 0.245137 & 0.219408 & 0.253363 & 0.365317            & 0.176397    & 0.157603   & 0.155172   & 0.114681       \\
-        35199    & 6.691650 & 5.263159 & 5.521273 & 5.481706            & 3.850077    & 3.133227   & 2.558239   & 2.028428       \\
-        246389   & 192.774403 & 172.514156 & 166.784374 & 165.938683    & 141.900566  & 118.400026 & 109.071518 & 108.034066     \\ \hline
-        % 1772481  &  &  &  &     &  &  &  &               \\ \hline
+    \begin{tabular}{ l  c c c c }
+        \toprule
+        & \multicolumn{2}{c}{Native Order} & \multicolumn{2}{c}{RCM Order} \\ \midrule
+        \begin{minipage}[t][.75cm][t]{1.75cm}
+        \raggedleft method \\
+        \raggedright n° threads \\
+        \end{minipage} & 1 & 2 		& 1 & 2 		\\ \midrule
+        1  & 8.219900 & 5.204082 & 8.249664 & 5.618524   \\ 
+        2  & 4.630122 & 3.205535 & 4.689079 & 3.162474   \\
+        3  & 4.060645 & 2.878401 & 4.205213 & 2.737441   \\
+        4  & 3.634686 & 2.751820 & 3.705338 & 2.398958   \\ \bottomrule
     \end{tabular}
-    }
-    \caption{GMRES without Restart Wallclock Time per mesh per number of processors.}\label{tab:gmrestime}
+    \caption{Wall-clock time (sec) for the assembly of Cube\_1772481 per number of threads using the different methods.}\label{tab:assemblytimes}
 \end{table}
 
+\begin{table}[H]
+    \begin{tabular}{ l  c c c c }
+        \toprule
+        & \multicolumn{2}{c}{Native Order} & \multicolumn{2}{c}{RCM Order} \\ \midrule
+        \begin{minipage}[t][.75cm][t]{1.75cm}
+        \raggedleft method \\
+        \raggedright n° threads \\
+        \end{minipage} & 1 & 2 		& 1 & 2 		\\ \midrule
+        1  & 1    &    1 &    1 & 1     \\ 
+        2  & 1.77 & 1.62 & 1.76 & 1.78   \\
+        3  & 2.03 & 1.81 & 1.96 & 2.05   \\
+        4  & 2.26 & 1.89 & 2.23 & 2.34   \\ \bottomrule
+    \end{tabular}
+    \hfill 
+    \begin{tabular}{ l  c c c c }
+        \toprule
+        & \multicolumn{2}{c}{Native Order} & \multicolumn{2}{c}{RCM Order} \\ \midrule
+        \begin{minipage}[t][.75cm][t]{1.75cm}
+        \raggedleft method \\
+        \raggedright n° threads \\
+        \end{minipage} & 1 & 2 		& 1 & 2 		\\ \midrule
+        1  & 1 & 1 & 1 & 1   \\ 
+        2  & 0.885 & 0.81 & 0.88 & 0.89   \\
+        3  & 0.677 & 0.603 & 0.65 & 0.683   \\
+        4  & 0.565 & 0.472 & 0.5575 & 0.585   \\ \bottomrule
+    \end{tabular}
 
-With $\texttt{restart}=20$ the runtime reduced as expected and the gap between fullQR and updateQR is reduced up to nothing as we can see in Table \ref{tab:restartgmrestime}.
+    \caption{Speedup (left) and Efficiency (right) for the assembly of Cube\_1772481 per number of threads.}\label{tab:assemblyspeedups}
+\end{table}
+
+\begin{figure}[H]
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\textwidth]{pic/timeAssembly.jpg}
+    \end{subfigure} \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\textwidth]{pic/speedupAssembly.jpg}
+    \end{subfigure} 
+    \caption{Wall-clock time and speedup for the parallel assembly of Cube\_1772481.}
+\end{figure}
+\subsection{GMRES}
+We record in Table \ref{tab:gmrestimes} the wall-clock time for the GMRES algorithm for the topology Cubo\_246389, with full QR or with Givens rotations, with different number of threads without $\texttt{restart}$ and with $\texttt{restart}=20$ and in Table \ref{tab:gmresspeedups} the speedup and the efficiency. 
+With $\texttt{restart}=20$ the runtime is reduced as expected and the gap between fullQR and updateQR is slimmed. On the other hand, without restart 692 iterations are needed to converge and the difference between methods is evident.
+Due to the intrinsically sequentiality of the algorithm, e.g., scalar products in the orthogonalization have to be performed necessarely one after the other, the speedups are sensibly worse compared to the assembly, which is well fit to be parallelized.
+
 \begin{table}[H]
     \centering
-    \scalebox{0.9}{
-    \begin{tabular}{|l|cccc|cccc|}
-        \hline
-        mesh     & \multicolumn{4}{c|}{Full QR}                     & \multicolumn{4}{c|}{Givens Rotations}              \\ \hline
-        np       & 1 & 2 & 3 & 4                                    & 1          & 2         & 3         & 4             \\ \hline
-        591      & 0.005044 & 0.006249 & 0.007026 & 0.008006        & 0.004282   & 0.005619  & 0.005794  & 0.008158      \\
-        4820     & 0.074955 & 0.051164 & 0.054156 & 0.060948        & 0.072978   & 0.051687  & 0.072261  & 0.056536      \\
-        35199    & 1.481658 & 0.911852 & 0.893830 & 0.796473        & 1.370873   & 0.994098  & 0.917565  & 0.788522      \\
-        246389   & 28.826296 & 22.153475 & 21.679111 & 19.995768    & 30.915334  & 19.829192 & 19.641860 & 18.240454     \\ \hline
-        % 1772481  &  &  &  &     &  &  &  &               \\ \hline
+    \begin{tabular}{ l  c c c c }
+        \toprule
+        & \multicolumn{2}{c}{no \texttt{restart}} & \multicolumn{2}{c}{\texttt{restart}=20} \\ \midrule
+        \begin{minipage}[t][.75cm][t]{1.75cm}
+        \raggedleft method \\
+        \raggedright n° threads \\
+        \end{minipage} & fullQR & Givens 		& fullQR & Givens		\\ \midrule
+        1  & 180.900720 & 141.801716 & 27.755223 & 28.141819   \\ 
+        2  & 148.415983 & 105.693213 & 20.456823 & 19.665255   \\
+        3  & 151.490037 & 103.072335 & 19.955573 & 19.751338  \\
+        4  & 153.800005 & 97.531304  & 18.681080 & 18.420930   \\ \bottomrule
+
     \end{tabular}
-    }
-    \caption{GMRES with $\texttt{restart}=20$ Wallclock Time per mesh per number of processors.}\label{tab:restartgmrestime}
+    \caption{Wall-clock time (sec) for the GMRES on Cube\_246389 per number of threads using the different methods.}\label{tab:gmrestimes}
 \end{table}
 
+\begin{table}[H]
+    \begin{tabular}{ l  c c c c }
+        \toprule
+        & \multicolumn{2}{c}{no \texttt{restart}} & \multicolumn{2}{c}{\texttt{restart}=20} \\ \midrule
+        \begin{minipage}[t][.75cm][t]{1.75cm}
+        \raggedleft method \\
+        \raggedright n° threads \\
+        \end{minipage} & fullQR & Givens 		& fullQR & Givens		\\ \midrule
+        1  & 1    & 1    & 1    & 1   \\ 
+        2  & 1.22 & 1.34 & 1.35 & 1.43   \\
+        3  & 1.19 & 1.37 & 1.39 & 1.42  \\
+        4  & 1.18 & 1.45 & 1.48 & 1.52   \\ \bottomrule
 
-\todo{FAI PLOT CON I VALORI DI QUESTE TABELLE E CALCOLA SPEEDUP}
+    \end{tabular}
+    \hfill 
+    \begin{tabular}{ l  c c c c }
+        \toprule
+        & \multicolumn{2}{c}{no \texttt{restart}} & \multicolumn{2}{c}{\texttt{restart}=20} \\ \midrule
+        \begin{minipage}[t][.75cm][t]{1.75cm}
+        \raggedleft method \\
+        \raggedright n° threads \\
+        \end{minipage} & fullQR & Givens 		& fullQR & Givens		\\ \midrule
+        1  & 1 & 1 & 1 & 1   \\ 
+        2  & 0.61 & 0.67 & 0.675 & 0.715  \\
+        3  & 0.396 & 0.456 & 0.463 & 0.473  \\
+        4  & 0.285 & 0.3625 & 0.37 & 0.38  \\ \bottomrule
 
+    \end{tabular}
+
+    \caption{Speedup (left) and Efficiency (right) for the GMRES on Cube\_246389 per number of threads.}\label{tab:gmresspeedups}
+\end{table}
+
+\begin{figure}[H]
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\textwidth]{pic/timeGMRES.jpg}
+    \end{subfigure} \hfill
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\textwidth]{pic/timeGMRES20.jpg}
+    \end{subfigure} 
+    \hfill
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\textwidth]{pic/speedupGMRES.jpg}
+    \end{subfigure} 
+    \caption{From left to right wall-clock time (respectively without restart and with restart = 20) and speedup for the GMRES algorithm with Cube\_1772481.}
+\end{figure}
+
+\section{Conclusive Remarks}
+We successfully parallelized, using OpenMP, the computation of a numerical solution of a transient convection-diffusion equation with the Finite Element Method.
+Even on a standard personal computer with a maximum of four available threads, we achieved a reduction in wall-clock time for both the assembly phase and the GMRES solver. The speedup was more pronounced in the assembly phase, as GMRES contains inherently sequential components that limit its parallel performance.
 \end{document}

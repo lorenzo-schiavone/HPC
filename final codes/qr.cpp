@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
+#include <string>
 
 double norm(double* v, int n){
   double acc=0.;
@@ -24,30 +25,20 @@ void qr(double** A, int nrow, int ncol, double*** Q_out, double*** R_out){
   // this is the only case i am interested in, or ncol = nrow
 
   double** Q = (double**) malloc(nrow * sizeof(double*));
-  double* Qbuf = (double*) malloc(nrow*nrow * sizeof(double));
+  double* Qbuf = (double*) calloc(nrow*nrow, sizeof(double));
   for (int i=0; i<nrow;i++){
     Q[i] = &Qbuf[i*nrow];
   }
 
   double** R = (double**) malloc(ncol * sizeof(double*));
-  double* Rbuf = (double*) malloc(nrow*ncol * sizeof(double));
+  double* Rbuf = (double*) calloc(nrow*ncol,sizeof(double));
   for (int i=0; i<ncol;i++){
     R[i] = &Rbuf[i*nrow];
   }
-  // set R, Q ==0
-  // for (int j=0; j<nrow; j++){
-  //    for (int i=0; i<nrow; i++){
-  //     Q[j][i]= 0.;
-  //    }
-  // }
-  for (int j=0; j<ncol; j++){
-     for (int i=0; i<nrow; i++){
-      R[j][i]= 0.;
-     }
-  }
+
   int min_d = (nrow<ncol) ? nrow : ncol;
 
-  // copy column of A into Q 
+  // copy columns of A into Q 
   for (int j=0; j<min_d; j++){
      for (int i=0; i<nrow; i++){
       Q[j][i]= A[j][i];
@@ -66,9 +57,6 @@ void qr(double** A, int nrow, int ncol, double*** Q_out, double*** R_out){
   for (int i=0;i<min_d;i++){
     // normalizzo colonna Q[i]
     alpha= norm(Q[i], nrow);
-    // if (alpha < 1e-10){
-    //   break; // è una colonna di zeri non bene
-    // }
     for (int j=0;j<nrow;j++){
         Q[i][j]/=alpha;
     }
